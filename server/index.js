@@ -29,7 +29,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes - will be added incrementally
 app.use('/api/auth', require('./routes/auth'));
-// Placeholder for other routes
+app.use('/api/expense-categories', require('./routes/expenseCategories'));
+app.use('/api/income-categories', require('./routes/incomeCategories'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
