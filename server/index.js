@@ -31,6 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/expense-categories', require('./routes/expenseCategories'));
 app.use('/api/income-categories', require('./routes/incomeCategories'));
+app.use('/api/accounts', require('./routes/accounts'));
+// Placeholder for other routes
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
