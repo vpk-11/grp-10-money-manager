@@ -32,6 +32,7 @@ app.use('/api/auth', require('./routes/auth'));
 // Transaction routes
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/incomes', require('./routes/incomes'));
+app.use('/api/accounts', require('./routes/accounts'));
 // Placeholder for other routes
 
 // Health check endpoint
