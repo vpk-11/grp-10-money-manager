@@ -27,15 +27,14 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes - will be added incrementally
+// Routes
 app.use('/api/auth', require('./routes/auth'));
-// Transaction routes
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/incomes', require('./routes/incomes'));
 app.use('/api/expense-categories', require('./routes/expenseCategories'));
 app.use('/api/income-categories', require('./routes/incomeCategories'));
 app.use('/api/accounts', require('./routes/accounts'));
-// Placeholder for other routes
+app.use('/api/users', require('./routes/users'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
