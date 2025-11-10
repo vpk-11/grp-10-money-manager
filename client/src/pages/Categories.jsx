@@ -1,0 +1,102 @@
+import React, { useState } from 'react';
+import { useQuery } from 'react-query';
+import { Plus, Tag } from 'lucide-react';
+import { api } from '../utils/api';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+const Categories = () => {
+  const [activeTab, setActiveTab] = useState('expense');
+
+  const { data: expenseCategories, isLoading: expenseLoading } = useQuery(
+    'expense-categories',
+    () => api.get('/expense-categories').then(res => res.data),
+    { retry: false }
+  );
+
+  const { data: incomeCategories, isLoading: incomeLoading } = useQuery(
+    'income-categories',
+    () => api.get('/income-categories').then(res => res.data),
+    { retry: false }
+  );
+
+  const isLoading = expenseLoading || incomeLoading;
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  const currentCategories = activeTab === 'expense' ? expenseCategories : incomeCategories;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+        <button
+          onClick={() => console.log('Add category')}
+          className="btn btn-primary flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Category
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('expense')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'expense'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Expense Categories
+          </button>
+          <button
+            onClick={() => setActiveTab('income')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'income'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Income Categories
+          </button>
+        </nav>
+      </div>
+
+      {/* Category Grid Placeholder */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {currentCategories && currentCategories.length > 0 ? (
+          <div className="col-span-full card">
+            <p className="text-gray-500">Category cards will appear here...</p>
+          </div>
+        ) : (
+          <div className="col-span-full">
+            <div className="text-center py-12 card">
+              <Tag className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No {activeTab} categories
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by creating a new {activeTab} category.
+              </p>
+              <div className="mt-6">
+                <button
+                  onClick={() => console.log('Add category')}
+                  className="btn btn-primary inline-flex items-center"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Category
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Categories;
