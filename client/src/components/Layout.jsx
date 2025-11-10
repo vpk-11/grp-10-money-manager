@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-
-// Placeholder components for now (will be built by other team members)
-const Dashboard = () => <div className="p-8"><h1 className="text-2xl font-bold">Dashboard</h1><p>Coming soon...</p></div>;
-const Accounts = () => <div className="p-8"><h1 className="text-2xl font-bold">Accounts</h1><p>Coming soon...</p></div>;
-const Expenses = () => <div className="p-8"><h1 className="text-2xl font-bold">Expenses</h1><p>Coming soon...</p></div>;
-const Incomes = () => <div className="p-8"><h1 className="text-2xl font-bold">Incomes</h1><p>Coming soon...</p></div>;
-const Categories = () => <div className="p-8"><h1 className="text-2xl font-bold">Categories</h1><p>Coming soon...</p></div>;
-const Profile = () => <div className="p-8"><h1 className="text-2xl font-bold">Profile</h1><p>Coming soon...</p></div>;
+import Dashboard from '../pages/Dashboard';
+import Accounts from '../pages/Accounts';
+import Expenses from '../pages/Expenses';
+import Incomes from '../pages/Incomes';
+import Categories from '../pages/Categories';
+import Profile from '../pages/Profile';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

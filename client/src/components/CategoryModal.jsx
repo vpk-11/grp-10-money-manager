@@ -58,7 +58,7 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
         icon: type === 'expense' ? 'shopping-cart' : 'dollar-sign'
       });
     }
-  }, [category, type, reset, isOpen]);
+  }, [category, type, reset]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -107,7 +107,7 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                 {/* Category Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category Name *
+                    Category Name 
                   </label>
                   <input
                     {...register('name', {
@@ -117,7 +117,7 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                     })}
                     type="text"
                     className="input mt-1"
-                    placeholder="e.g., Groceries, Salary"
+                    placeholder={`e.g., ${type === 'expense' ? 'Groceries' : 'Salary'}`}
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -142,8 +142,8 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                   )}
                 </div>
 
-                {/* Color picker */}
-                <div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Color *
                   </label>
@@ -160,16 +160,16 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                   {errors.color && (
                     <p className="mt-1 text-sm text-red-600">{errors.color.message}</p>
                   )}
-                </div>
+                  </div>
 
                 {/* Icon selector */}
-                <div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Icon
                   </label>
                   <select
-                    {...register('icon')}
-                    className="input mt-1"
+                      {...register('icon')}
+                      className="input mt-1"
                   >
                     <option value="shopping-cart">Shopping Cart</option>
                     <option value="coffee">Coffee</option>
