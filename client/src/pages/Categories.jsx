@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
-import { Plus, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { api } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -19,6 +19,16 @@ const Categories = () => {
     { retry: false }
   );
 
+  const handleEdit = (category, type) => {
+    console.log('Edit category:', category, type);
+    // TODO: Will implement in next commit
+  };
+
+  const handleDelete = (id, type) => {
+    console.log('Delete category:', id, type);
+    // TODO: Will implement later
+  };
+
   const isLoading = expenseLoading || incomeLoading;
 
   if (isLoading) {
@@ -32,7 +42,7 @@ const Categories = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
         <button
-          onClick={() => console.log('Add category')}
+          onClick={() => console.log('Add category', activeTab)}
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -66,12 +76,57 @@ const Categories = () => {
         </nav>
       </div>
 
-      {/* Category Grid Placeholder */}
+      {/* Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {currentCategories && currentCategories.length > 0 ? (
-          <div className="col-span-full card">
-            <p className="text-gray-500">Category cards will appear here...</p>
-          </div>
+          currentCategories.map((category) => (
+            <div
+              key={category._id}
+              className="card hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: category.color + '20' }}
+                  >
+                    <Tag
+                      className="h-5 w-5"
+                      style={{ color: category.color }}
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {category.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Edit/Delete buttons */}
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => handleEdit(category, activeTab)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600"
+                    title="Edit category"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(category._id, activeTab)}
+                    className="p-1.5 text-gray-400 hover:text-red-600"
+                    title="Delete category"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
         ) : (
           <div className="col-span-full">
             <div className="text-center py-12 card">
@@ -84,7 +139,7 @@ const Categories = () => {
               </p>
               <div className="mt-6">
                 <button
-                  onClick={() => console.log('Add category')}
+                  onClick={() => console.log('Add category', activeTab)}
                   className="btn btn-primary inline-flex items-center"
                 >
                   <Plus className="h-4 w-4 mr-2" />
