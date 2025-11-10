@@ -1,7 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Wallet } from 'lucide-react';
+import { Plus, Edit, Trash2, Wallet } from 'lucide-react';
 import { api } from '../utils/api';
+import { formatCurrency } from '../utils/format';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Accounts = () => {
@@ -20,7 +21,13 @@ const Accounts = () => {
     retry: false,
   });
 
-  console.log('Accounts component rendered', accounts);
+  const handleEdit = (account) => {
+    console.log('Edit account:', account);
+  };
+
+  const handleDelete = (id) => {
+    console.log('Delete account:', id);
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -48,22 +55,70 @@ const Accounts = () => {
         </button>
       </div>
 
-      {/* Accounts grid */}
+      {/* Accounts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(accounts) && accounts.length > 0 ? (
           accounts.map((account) => (
-            <div key={account.id} className="card p-4 border rounded shadow">
-              <h3 className="text-lg font-medium">{account.name}</h3>
-              <p className="text-gray-500">{account.type}</p>
+            <div
+              key={account._id}
+              className="card p-4 border rounded shadow hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                {/* Account Info */}
+                <div className="flex items-center">
+                  <div
+                    className="p-3 rounded-lg"
+                    style={{ backgroundColor: account.color + '20' }}
+                  >
+                    <Wallet
+                      className="h-6 w-6"
+                      style={{ color: account.color }}
+                    />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{account.name}</h3>
+                    <p className="text-sm text-gray-500 capitalize">{account.type}</p>
+                  </div>
+                </div>
+
+                {/* Edit/Delete Buttons */}
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEdit(account)}
+                    className="p-2 text-gray-400 hover:text-gray-600"
+                    title="Edit account"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(account._id)}
+                    className="p-2 text-gray-400 hover:text-red-600"
+                    title="Delete account"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Balance */}
+              <div className="mt-4">
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(account.balance, account.currency)}
+                </p>
+                {account.description && (
+                  <p className="text-sm text-gray-500 mt-1">{account.description}</p>
+                )}
+              </div>
             </div>
           ))
         ) : (
+          // Empty State
           <div className="col-span-full">
             <div className="text-center py-12 card border rounded shadow">
               <Wallet className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts yet</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Get started by creating a new account.
+                Get started by creating your first account.
               </p>
               <div className="mt-6">
                 <button
