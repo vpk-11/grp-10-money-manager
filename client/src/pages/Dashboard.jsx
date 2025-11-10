@@ -1,18 +1,16 @@
 import React from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query'; // changed from 'react-query'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, Plus } from 'lucide-react';
 import { api } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/format';
 
 const Dashboard = () => {
-  const { data: dashboardData, isLoading, error } = useQuery(
-    'dashboard',
-    () => api.get('/users/dashboard').then(res => res.data),
-    {
-      refetchInterval: 30000, // Refetch every 30 seconds
-    }
-  );
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => api.get('/users/dashboard').then(res => res.data),
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div className="text-red-600">Error loading dashboard data</div>;
