@@ -1,269 +1,205 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { api } from '../utils/api';
 import toast from 'react-hot-toast';
+import { api } from '../utils/api';
 
 const AccountModal = ({ isOpen, onClose, account }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
-  // Create mutation
-  const createMutation = useMutation(
-    (data) => api.post('/accounts', data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('accounts');
-        toast.success('Account created successfully');
-        onClose();
-        reset();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to create account');
-      }
-    }
-  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      type: 'checking',
+      currency: 'USD',
+      balance: 0,
+      color: '#6366F1',
+      description: '',
+    },
+  });
 
-  // Update mutation
-  const updateMutation = useMutation(
-    (data) => api.put(`/accounts/${account?._id}`, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('accounts');
-        toast.success('Account updated successfully');
-        onClose();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to update account');
-      }
-    }
-  );
-
-  // Reset form when account changes or modal opens
+  // Reset form when opening for edit or create
   useEffect(() => {
     if (account) {
-      reset({
-        name: account.name,
-        type: account.type,
-        balance: account.balance,
-        currency: account.currency,
-        description: account.description,
-        color: account.color,
-        icon: account.icon
-      });
+      reset(account);
     } else {
       reset({
         name: '',
         type: 'checking',
-        balance: 0,
         currency: 'USD',
+        balance: 0,
+        color: '#6366F1',
         description: '',
-        color: '#3B82F6',
-        icon: 'wallet'
       });
     }
   }, [account, reset, isOpen]);
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    try {
-      if (account) {
-        await updateMutation.mutateAsync(data);
-      } else {
-        await createMutation.mutateAsync(data);
-      }
-    } finally {
-      setIsSubmitting(false);
+  // ✅ Create account mutation
+  const createAccountMutation = useMutation({
+    mutationFn: async (data) => {
+      const res = await api.post('/accounts', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      toast.success('Account created successfully!');
+      onClose();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to create account');
+    },
+  });
+
+  // ✅ Update account mutation
+  const updateAccountMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      const res = await api.put(`/accounts/${id}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      toast.success('Account updated successfully!');
+      onClose();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to update account');
+    },
+  });
+
+  const onSubmit = (formData) => {
+    if (account) {
+      updateAccountMutation.mutate({ id: account._id, data: formData });
+    } else {
+      createAccountMutation.mutate(formData);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        {/* Background overlay */}
-        <div 
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        {/* Close button */}
+        <button
           onClick={onClose}
-        ></div>
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
-        {/* Modal panel */}
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              {/* Modal header */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {account ? 'Edit Account' : 'Add New Account'}
-                </h3>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+        <h2 className="text-xl font-bold mb-4 text-gray-900">
+          {account ? 'Edit Account' : 'Add New Account'}
+        </h2>
 
-              {/* Form fields */}
-              <div className="space-y-4">
-                {/* Account Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Account Name *
-                  </label>
-                  <input
-                    {...register('name', { 
-                      required: 'Account name is required',
-                      minLength: { value: 2, message: 'Name must be at least 2 characters' },
-                      maxLength: { value: 50, message: 'Name must be less than 50 characters' }
-                    })}
-                    type="text"
-                    className="input mt-1"
-                    placeholder="e.g., Main Checking Account"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                  )}
-                </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Account Name</label>
+            <input
+              type="text"
+              {...register('name', { required: 'Account name is required' })}
+              className="mt-1 block w-full border rounded-md p-2"
+              placeholder="e.g., HDFC Savings"
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            )}
+          </div>
 
-                {/* Account Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Account Type *
-                  </label>
-                  <select
-                    {...register('type', { required: 'Account type is required' })}
-                    className="input mt-1"
-                  >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                    <option value="credit">Credit Card</option>
-                    <option value="cash">Cash</option>
-                    <option value="investment">Investment</option>
-                  </select>
-                  {errors.type && (
-                    <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
-                  )}
-                </div>
+          {/* Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Account Type</label>
+            <select
+              {...register('type', { required: true })}
+              className="mt-1 block w-full border rounded-md p-2"
+            >
+              <option value="checking">Checking</option>
+              <option value="savings">Savings</option>
+              <option value="credit">Credit</option>
+              <option value="cash">Cash</option>
+              <option value="investment">Investment</option>
+            </select>
+          </div>
 
-                {/* Balance and Currency */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Initial Balance *
-                    </label>
-                    <input
-                      {...register('balance', { 
-                        required: 'Balance is required',
-                        valueAsNumber: true,
-                        validate: value => !isNaN(value) || 'Must be a number'
-                      })}
-                      type="number"
-                      step="0.01"
-                      className="input mt-1"
-                      placeholder="0.00"
-                    />
-                    {errors.balance && (
-                      <p className="mt-1 text-sm text-red-600">{errors.balance.message}</p>
-                    )}
-                  </div>
+          {/* Currency */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Currency</label>
+            <select
+              {...register('currency', { required: true })}
+              className="mt-1 block w-full border rounded-md p-2"
+            >
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - Pound</option>
+              <option value="CAD">CAD - Canadian Dollar</option>
+              <option value="AUD">AUD - Australian Dollar</option>
+              <option value="JPY">JPY - Yen</option>
+              <option value="INR">INR - Indian Rupee</option>
+            </select>
+          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Currency
-                    </label>
-                    <select
-                      {...register('currency')}
-                      className="input mt-1"
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="CAD">CAD</option>
-                      <option value="AUD">AUD</option>
-                      <option value="JPY">JPY</option>
-                      <option value="INR">INR</option>
-                    </select>
-                  </div>
-                </div>
+          {/* Balance */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Initial Balance</label>
+            <input
+              type="number"
+              step="0.01"
+              {...register('balance', { required: true })}
+              className="mt-1 block w-full border rounded-md p-2"
+            />
+          </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Description
-                  </label>
-                  <textarea
-                    {...register('description', {
-                      maxLength: { value: 200, message: 'Description must be less than 200 characters' }
-                    })}
-                    rows="3"
-                    className="input mt-1"
-                    placeholder="Optional description for this account"
-                  ></textarea>
-                  {errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-                  )}
-                </div>
+          {/* Color Picker */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Color</label>
+            <input
+              type="color"
+              {...register('color')}
+              className="mt-1 h-10 w-16 border rounded-md p-1 cursor-pointer"
+            />
+          </div>
 
-                {/* Color picker */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Color
-                  </label>
-                  <div className="mt-1 flex items-center space-x-3">
-                    <input
-                      {...register('color')}
-                      type="color"
-                      className="h-10 w-20 rounded border border-gray-300"
-                    />
-                    <span className="text-sm text-gray-500">
-                      Choose a color to identify this account
-                    </span>
-                  </div>
-                </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              {...register('description')}
+              rows="2"
+              placeholder="Optional description..."
+              className="mt-1 block w-full border rounded-md p-2"
+            ></textarea>
+          </div>
 
-                {/* Icon selector */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Icon
-                  </label>
-                  <select
-                    {...register('icon')}
-                    className="input mt-1"
-                  >
-                    <option value="wallet">Wallet</option>
-                    <option value="credit-card">Credit Card</option>
-                    <option value="piggy-bank">Piggy Bank</option>
-                    <option value="bank">Bank</option>
-                    <option value="dollar-sign">Dollar Sign</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal footer */}
-            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn btn-primary w-full sm:w-auto sm:ml-3"
-              >
-                {isSubmitting ? 'Saving...' : (account ? 'Update Account' : 'Create Account')}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary w-full sm:w-auto mt-3 sm:mt-0"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Submit button */}
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary px-4 py-2 border rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={
+                createAccountMutation.isPending || updateAccountMutation.isPending
+              }
+              className="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              {createAccountMutation.isPending || updateAccountMutation.isPending
+                ? 'Saving...'
+                : account
+                ? 'Update'
+                : 'Create'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
