@@ -7,24 +7,21 @@ import CategoryModal from '../components/CategoryModal';
 import toast from 'react-hot-toast';
 
 const Categories = () => {
-  const [activeTab, setActiveTab] = useState('expense');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [activeTab, setActiveTab] = useState('expense');
   const queryClient = useQueryClient();
 
   const { data: expenseCategories, isLoading: expenseLoading } = useQuery(
     'expense-categories',
-    () => api.get('/expense-categories').then(res => res.data),
-    { retry: false }
+    () => api.get('/expense-categories').then(res => res.data)
   );
 
   const { data: incomeCategories, isLoading: incomeLoading } = useQuery(
     'income-categories',
-    () => api.get('/income-categories').then(res => res.data),
-    { retry: false }
+    () => api.get('/income-categories').then(res => res.data)
   );
 
-  // Delete mutations
   const deleteExpenseCategoryMutation = useMutation(
     (id) => api.delete(`/expense-categories/${id}`),
     {
@@ -71,16 +68,9 @@ const Categories = () => {
     setEditingCategory(null);
   };
 
-  const handleAddCategory = () => {
-    setEditingCategory(null);
-    setIsModalOpen(true);
-  };
-
   const isLoading = expenseLoading || incomeLoading;
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   const currentCategories = activeTab === 'expense' ? expenseCategories : incomeCategories;
 
@@ -89,7 +79,7 @@ const Categories = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
         <button
-          onClick={handleAddCategory}
+          onClick={() => setIsModalOpen(true)}
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -123,90 +113,71 @@ const Categories = () => {
         </nav>
       </div>
 
-      {/* Category Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {currentCategories && currentCategories.length > 0 ? (
-          currentCategories.map((category) => (
-            <div
-              key={category._id}
-              className="card hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: category.color + '20' }}
-                  >
-                    <Tag
-                      className="h-5 w-5"
-                      style={{ color: category.color }}
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {category.name}
-                    </h3>
-                    {category.description && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {currentCategories?.map((category) => (
+          <div key={category._id} className="card hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center">
+                <div 
+                  className="p-3 rounded-lg"
+                  style={{ backgroundColor: category.color + '20' }}
+                >
+                  <Tag className="h-6 w-6" style={{ color: category.color }} />
                 </div>
-
-                {/* Edit/Delete buttons */}
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEdit(category, activeTab)}
-                    className="p-1.5 text-gray-400 hover:text-gray-600"
-                    title="Edit category"
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category._id, activeTab)}
-                    className="p-1.5 text-gray-400 hover:text-red-600"
-                    title="Delete category"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-900">{category.name}</h3>
+                  {category.description && (
+                    <p className="text-sm text-gray-500">{category.description}</p>
+                  )}
                 </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full">
-            <div className="text-center py-12 card">
-              <Tag className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No {activeTab} categories
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by creating a new {activeTab} category.
-              </p>
-              <div className="mt-6">
+              <div className="flex space-x-2">
                 <button
-                  onClick={handleAddCategory}
-                  className="btn btn-primary inline-flex items-center"
+                  onClick={() => handleEdit(category, activeTab)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(category._id, activeTab)}
+                  className="p-2 text-gray-400 hover:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
           </div>
-        )}
+        ))}
       </div>
 
-      {/* CategoryModal */}
+      {currentCategories?.length === 0 && (
+        <div className="text-center py-12">
+          <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No {activeTab} categories yet
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Get started by creating your first {activeTab} category.
+          </p>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn btn-primary"
+          >
+            Add Category
+          </button>
+        </div>
+      )}
+
       <CategoryModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         category={editingCategory}
-        type={editingCategory?.type || activeTab}
+        type={activeTab}
       />
     </div>
   );
 };
 
 export default Categories;
+
