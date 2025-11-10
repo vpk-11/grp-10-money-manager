@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { api } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CategoryModal from '../components/CategoryModal';
+import toast from 'react-hot-toast';
 
 const Categories = () => {
   const [activeTab, setActiveTab] = useState('expense');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: expenseCategories, isLoading: expenseLoading } = useQuery(
     'expense-categories',
@@ -19,14 +24,56 @@ const Categories = () => {
     { retry: false }
   );
 
+  // Delete mutations
+  const deleteExpenseCategoryMutation = useMutation(
+    (id) => api.delete(`/expense-categories/${id}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('expense-categories');
+        toast.success('Category deleted successfully');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to delete category');
+      }
+    }
+  );
+
+  const deleteIncomeCategoryMutation = useMutation(
+    (id) => api.delete(`/income-categories/${id}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('income-categories');
+        toast.success('Category deleted successfully');
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to delete category');
+      }
+    }
+  );
+
   const handleEdit = (category, type) => {
-    console.log('Edit category:', category, type);
-    // TODO: Will implement in next commit
+    setEditingCategory({ ...category, type });
+    setIsModalOpen(true);
   };
 
   const handleDelete = (id, type) => {
-    console.log('Delete category:', id, type);
-    // TODO: Will implement later
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      if (type === 'expense') {
+        deleteExpenseCategoryMutation.mutate(id);
+      } else {
+        deleteIncomeCategoryMutation.mutate(id);
+      }
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setIsModalOpen(true);
   };
 
   const isLoading = expenseLoading || incomeLoading;
@@ -42,7 +89,7 @@ const Categories = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
         <button
-          onClick={() => console.log('Add category', activeTab)}
+          onClick={handleAddCategory}
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -139,7 +186,7 @@ const Categories = () => {
               </p>
               <div className="mt-6">
                 <button
-                  onClick={() => console.log('Add category', activeTab)}
+                  onClick={handleAddCategory}
                   className="btn btn-primary inline-flex items-center"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -150,6 +197,14 @@ const Categories = () => {
           </div>
         )}
       </div>
+
+      {/* CategoryModal */}
+      <CategoryModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        category={editingCategory}
+        type={editingCategory?.type || activeTab}
+      />
     </div>
   );
 };
