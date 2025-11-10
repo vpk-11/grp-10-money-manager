@@ -107,7 +107,7 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                 {/* Category Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category Name 
+                    Category Name
                   </label>
                   <input
                     {...register('name', {
@@ -143,43 +143,43 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Color picker */}
                   <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Color *
-                  </label>
-                  <div className="mt-1 flex items-center space-x-3">
-                    <input
-                      {...register('color', { required: 'Color is required' })}
-                      type="color"
-                      className="h-10 w-20 rounded border border-gray-300"
-                    />
-                    <span className="text-sm text-gray-500">
-                      Choose a color to identify this category
-                    </span>
-                  </div>
-                  {errors.color && (
-                    <p className="mt-1 text-sm text-red-600">{errors.color.message}</p>
-                  )}
+                    <label className="block text-sm font-medium text-gray-700">
+                      Color
+                    </label>
+                    <div className="mt-1 flex items-center space-x-3">
+                      <input
+                        {...register('color', { required: 'Color is required' })}
+                        type="color"
+                        className="h-10 w-20 rounded border border-gray-300"
+                      />
+                      <span className="text-sm text-gray-500">
+                        Choose a color to identify this category
+                      </span>
+                    </div>
+                    {errors.color && (
+                      <p className="mt-1 text-sm text-red-600">{errors.color.message}</p>
+                    )}
                   </div>
 
-                {/* Icon selector */}
+                  {/* Icon selector */}
                   <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Icon
-                  </label>
-                  <select
-                      {...register('icon')}
-                      className="input mt-1"
-                  >
-                    <option value="shopping-cart">Shopping Cart</option>
-                    <option value="coffee">Coffee</option>
-                    <option value="home">Home</option>
-                    <option value="car">Car</option>
-                    <option value="heart">Health</option>
-                    <option value="dollar-sign">Dollar Sign</option>
-                    <option value="briefcase">Briefcase</option>
-                    <option value="gift">Gift</option>
-                  </select>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Icon
+                    </label>
+                    <label className="block text-sm font-medium text-gray-700">Icon</label>
+                    <select {...register('icon')} className="input mt-1">
+                      <option value="shopping-cart">Shopping Cart</option>
+                      <option value="coffee">Coffee</option>
+                      <option value="home">Home</option>
+                      <option value="car">Car</option>
+                      <option value="heart">Health</option>
+                      <option value="dollar-sign">Dollar Sign</option>
+                      <option value="briefcase">Briefcase</option>
+                      <option value="gift">Gift</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
