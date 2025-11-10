@@ -1,21 +1,17 @@
-import React from 'react';
+import React from "react";
 
-const sizeClasses = {
-  sm: 'h-4 w-4',
-  md: 'h-8 w-8',
-  lg: 'h-12 w-12',
-  xl: 'h-16 w-16',
-};
+const LoadingSpinner = ({ size = "md" }) => {
+  const sizeClass =
+    size === "xl"
+      ? "w-16 h-16 border-4"
+      : size === "lg"
+      ? "w-12 h-12 border-4"
+      : "w-8 h-8 border-2";
 
-const LoadingSpinner = ({ size = 'md', className = '' }) => {
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div
-        className={`animate-spin rounded-full border-2 border-gray-300 border-t-primary-600 ${sizeClasses[size]}`}
-        aria-label="Loading"
-        role="status"
-      />
-    </div>
+    <div
+      className={`animate-spin rounded-full border-t-2 border-b-2 border-blue-500 ${sizeClass}`}
+    ></div>
   );
 };
 
