@@ -1,29 +1,26 @@
-export const formatCurrency = (amount, currency = 'USD', locale = 'en-US') => {
-  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return '$0.00';
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-    }).format(Number(amount));
-  } catch {
-    return `$${Number(amount).toFixed(2)}`;
-  }
+export const formatCurrency = (amount, currency = 'USD') => {
+  if (amount === null || amount === undefined) return '$0.00';
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
 };
 
-export const formatDate = (date, locale = 'en-US') => {
+export const formatDate = (date) => {
   if (!date) return '';
-  const d = date instanceof Date ? date : new Date(date);
-  return d.toLocaleDateString(locale, {
+  
+  return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 };
 
-export const formatDateTime = (date, locale = 'en-US') => {
+export const formatDateTime = (date) => {
   if (!date) return '';
-  const d = date instanceof Date ? date : new Date(date);
-  return d.toLocaleString(locale, {
+  
+  return new Date(date).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -32,10 +29,12 @@ export const formatDateTime = (date, locale = 'en-US') => {
   });
 };
 
-export const formatNumber = (number, decimals = 2, locale = 'en-US') => {
-  if (number === null || number === undefined || Number.isNaN(Number(number))) return '0';
-  return new Intl.NumberFormat(locale, {
+export const formatNumber = (number, decimals = 2) => {
+  if (number === null || number === undefined) return '0';
+  
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(Number(number));
+  }).format(number);
 };
+
