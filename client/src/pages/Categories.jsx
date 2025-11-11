@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { api } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -12,41 +12,43 @@ const Categories = () => {
   const [activeTab, setActiveTab] = useState('expense');
   const queryClient = useQueryClient();
 
-  const { data: expenseCategories, isLoading: expenseLoading } = useQuery(
-    'expense-categories',
-    () => api.get('/expense-categories').then(res => res.data)
-  );
+  const { data: expenseCategories = [], isLoading: expenseLoading } = useQuery({
+    queryKey: ['expense-categories'],
+    queryFn: () => api.get('/expense-categories').then(res => res.data),
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to load expense categories');
+    },
+  });
 
-  const { data: incomeCategories, isLoading: incomeLoading } = useQuery(
-    'income-categories',
-    () => api.get('/income-categories').then(res => res.data)
-  );
+  const { data: incomeCategories = [], isLoading: incomeLoading } = useQuery({
+    queryKey: ['income-categories'],
+    queryFn: () => api.get('/income-categories').then(res => res.data),
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to load income categories');
+    },
+  });
 
-  const deleteExpenseCategoryMutation = useMutation(
-    (id) => api.delete(`/expense-categories/${id}`),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('expense-categories');
-        toast.success('Category deleted successfully');
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to delete category');
-      }
-    }
-  );
+  const deleteExpenseCategoryMutation = useMutation({
+    mutationFn: (id) => api.delete(`/expense-categories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expense-categories'] });
+      toast.success('Category deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete category');
+    },
+  });
 
-  const deleteIncomeCategoryMutation = useMutation(
-    (id) => api.delete(`/income-categories/${id}`),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('income-categories');
-        toast.success('Category deleted successfully');
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to delete category');
-      }
-    }
-  );
+  const deleteIncomeCategoryMutation = useMutation({
+    mutationFn: (id) => api.delete(`/income-categories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['income-categories'] });
+      toast.success('Category deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete category');
+    },
+  });
 
   const handleEdit = (category, type) => {
     setEditingCategory({ ...category, type });

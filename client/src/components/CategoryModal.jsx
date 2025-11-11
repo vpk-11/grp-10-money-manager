@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { api } from '../utils/api';
 import toast from 'react-hot-toast';
@@ -11,35 +11,31 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   // Create mutation
-  const createMutation = useMutation(
-    (data) => api.post(`/${type}-categories`, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(`${type}-categories`);
-        toast.success('Category created successfully');
-        onClose();
-        reset();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to create category');
-      }
+  const createMutation = useMutation({
+    mutationFn: (data) => api.post(`/${type}-categories`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`${type}-categories`] });
+      toast.success('Category created successfully');
+      onClose();
+      reset();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to create category');
     }
-  );
+  });
 
   // Update mutation
-  const updateMutation = useMutation(
-    (data) => api.put(`/${type}-categories/${category?._id}`, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(`${type}-categories`);
-        toast.success('Category updated successfully');
-        onClose();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to update category');
-      }
+  const updateMutation = useMutation({
+    mutationFn: (data) => api.put(`/${type}-categories/${category?._id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`${type}-categories`] });
+      toast.success('Category updated successfully');
+      onClose();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update category');
     }
-  );
+  });
 
   // Reset form when category changes or modal opens
   useEffect(() => {
@@ -168,7 +164,6 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                     <label className="block text-sm font-medium text-gray-700">
                       Icon
                     </label>
-                    <label className="block text-sm font-medium text-gray-700">Icon</label>
                     <select {...register('icon')} className="input mt-1">
                       <option value="shopping-cart">Shopping Cart</option>
                       <option value="coffee">Coffee</option>

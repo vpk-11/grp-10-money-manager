@@ -16,13 +16,13 @@ const Dashboard = () => {
   if (error) return <div className="text-red-600">Error loading dashboard data</div>;
 
   const {
-    totalBalance,
-    monthlyExpenses,
-    monthlyIncome,
-    yearlyExpenses,
-    yearlyIncome,
-    accounts,
-    recentTransactions
+    totalBalance = 0,
+    monthlyExpenses = 0,
+    monthlyIncome = 0,
+    yearlyExpenses = 0,
+    yearlyIncome = 0,
+    accounts = 0,
+    recentTransactions = []
   } = dashboardData || {};
 
   const monthlyNet = monthlyIncome - monthlyExpenses;

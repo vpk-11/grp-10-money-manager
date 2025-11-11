@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { api } from '../utils/api';
 import toast from 'react-hot-toast';
@@ -10,34 +10,24 @@ const AccountModal = ({ isOpen, onClose, account }) => {
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
-  const createMutation = useMutation(
-    (data) => api.post('/accounts', data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('accounts');
-        toast.success('Account created successfully');
-        onClose();
-        reset();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to create account');
+  const saveAccount = useMutation({
+    mutationFn: (data) => {
+      if (account) {
+        return api.put(`/accounts/${account?._id}`, data);
+      } else {
+        return api.post('/accounts', data);
       }
-    }
-  );
-
-  const updateMutation = useMutation(
-    (data) => api.put(`/accounts/${account?._id}`, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('accounts');
-        toast.success('Account updated successfully');
-        onClose();
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to update account');
-      }
-    }
-  );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      toast.success('Account saved');
+      onClose();
+      reset();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to save account');
+    },
+  });
 
   useEffect(() => {
     if (account) {
@@ -66,11 +56,7 @@ const AccountModal = ({ isOpen, onClose, account }) => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      if (account) {
-        await updateMutation.mutateAsync(data);
-      } else {
-        await createMutation.mutateAsync(data);
-      }
+      await saveAccount.mutateAsync(data);
     } finally {
       setIsSubmitting(false);
     }

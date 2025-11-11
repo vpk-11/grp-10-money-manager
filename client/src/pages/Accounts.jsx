@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Wallet } from 'lucide-react';
 import { api } from '../utils/api';
 import { formatCurrency } from '../utils/format';
@@ -12,23 +12,24 @@ const Accounts = () => {
   const [editingAccount, setEditingAccount] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: accounts, isLoading } = useQuery(
-    'accounts',
-    () => api.get('/accounts').then(res => res.data)
-  );
+  const { data: accounts = [], isLoading } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => api.get('/accounts').then(res => res.data),
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to load accounts');
+    },
+  });
 
-  const deleteAccountMutation = useMutation(
-    (id) => api.delete(`/accounts/${id}`),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('accounts');
-        toast.success('Account deleted successfully');
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to delete account');
-      }
-    }
-  );
+  const deleteAccountMutation = useMutation({
+    mutationFn: (id) => api.delete(`/accounts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      toast.success('Account deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete account');
+    },
+  });
 
   const handleEdit = (account) => {
     setEditingAccount(account);

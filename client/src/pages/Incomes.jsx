@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query'; // changed
 import { Plus, Search } from 'lucide-react';
 import { api } from '../utils/api';
 import { formatCurrency, formatDate } from '../utils/format';
@@ -16,20 +16,20 @@ const Incomes = () => {
     endDate: ''
   });
 
-  const { data: incomesData, isLoading } = useQuery(
-    ['incomes', filters],
-    () => api.get('/incomes', { params: filters }).then(res => res.data)
-  );
+  const { data: incomesData, isLoading } = useQuery({
+    queryKey: ['incomes', filters],
+    queryFn: () => api.get('/incomes', { params: filters }).then(res => res.data),
+  });
 
-  const { data: categories } = useQuery(
-    'income-categories',
-    () => api.get('/income-categories').then(res => res.data)
-  );
+  const { data: categories } = useQuery({
+    queryKey: ['income-categories'],
+    queryFn: () => api.get('/income-categories').then(res => res.data),
+  });
 
-  const { data: accounts } = useQuery(
-    'accounts',
-    () => api.get('/accounts').then(res => res.data)
-  );
+  const { data: accounts } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => api.get('/accounts').then(res => res.data),
+  });
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
