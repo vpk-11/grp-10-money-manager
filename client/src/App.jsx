@@ -12,6 +12,7 @@ import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
 import Categories from './pages/Categories';
 import Profile from './pages/Profile';
+import Chatbot from './pages/Chatbot';
 
 function App() {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ function App() {
           <Route path="incomes" element={<Incomes />} />
           <Route path="categories" element={<Categories />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="chatbot" element={<Chatbot />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>
       </Routes>
