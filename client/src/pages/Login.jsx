@@ -144,6 +144,11 @@ const Login = () => {
               {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
+          
+          {/* AI Chatbot Integration - Enhanced authentication flow */}
+          <p className="text-xs text-center text-gray-500 mt-4">
+            🤖 New! Try our AI Financial Assistant after logging in
+          </p>
         </form>
       </div>
     </div>
