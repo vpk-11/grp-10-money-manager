@@ -17,7 +17,11 @@ const Register = () => {
     const result = await registerUser(data.name, data.email, data.password);
     
     if (result.success) {
-      toast.success('Registration successful!');
+      toast.success('🎉 Registration successful! Welcome to Money Manager!');
+      // Welcome message mentions AI chatbot feature
+      setTimeout(() => {
+        toast.success('💡 Don\'t forget to try our AI Financial Assistant!');
+      }, 2000);
       navigate('/dashboard');
     } else {
       toast.error(result.message);
@@ -170,6 +174,11 @@ const Register = () => {
               {isSubmitting ? 'Creating account...' : 'Create account'}
             </button>
           </div>
+          
+          {/* AI Chatbot Integration - Welcome message for new users */}
+          <p className="text-xs text-center text-gray-500 mt-4">
+            🤖 Get personalized financial advice with our AI Assistant!
+          </p>
         </form>
       </div>
     </div>
