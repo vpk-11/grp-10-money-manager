@@ -3,8 +3,11 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Updated user management routes for AI Chatbot Integration
+// Provides user financial data context for personalized chatbot responses
+
 // @route   GET /api/users/dashboard
-// @desc    Get dashboard data
+// @desc    Get dashboard data (used by chatbot for context)
 // @access  Private
 router.get('/dashboard', auth, async (req, res) => {
   try {
@@ -64,6 +67,7 @@ router.get('/dashboard', auth, async (req, res) => {
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10);
 
+    // Enhanced response includes chatbot-ready financial summary
     res.json({
       totalBalance,
       monthlyExpenses: monthlyExpenses[0]?.total || 0,
@@ -71,7 +75,10 @@ router.get('/dashboard', auth, async (req, res) => {
       yearlyExpenses: yearlyExpenses[0]?.total || 0,
       yearlyIncome: yearlyIncome[0]?.total || 0,
       accounts: accounts.length,
-      recentTransactions
+      recentTransactions,
+      // Chatbot context data
+      savingsRate: monthlyIncome[0]?.total ? 
+        ((monthlyIncome[0].total - (monthlyExpenses[0]?.total || 0)) / monthlyIncome[0].total * 100).toFixed(2) : 0
     });
   } catch (error) {
     console.error('Dashboard error:', error);

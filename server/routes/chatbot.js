@@ -1,0 +1,298 @@
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const Expense = require('../models/Expense');
+const Income = require('../models/Income');
+const Budget = require('../models/Budget');
+const Debt = require('../models/Debt');
+const Account = require('../models/Account');
+const { queryLLM } = require('../utils/llm');
+
+// Chatbot endpoint - provides financial insights and answers
+// This route performs its own auth so it accepts either an Authorization header
+// or a `token` in the request body. It verifies real JWTs using `JWT_SECRET`.
+router.post('/message', async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ message: 'Message is required' });
+    }
+
+    // Authentication: allow token in header or in body (for easy testing)
+    const headerToken = req.header('Authorization')?.replace('Bearer ', '') || null;
+    const bodyToken = req.body.token || null;
+    const token = headerToken || bodyToken;
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    let user;
+    // Verify real JWT
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      user = await require('../models/User').findById(decoded.userId).select('-password');
+      if (!user) return res.status(401).json({ message: 'Token is not valid (user not found)' });
+    } catch (err) {
+      console.error('Token verification failed:', err.message);
+      return res.status(401).json({ message: 'Token is not valid' });
+    }
+
+    const normalizedMessage = message.toLowerCase().trim();
+
+    // Generate response based on message content
+    let response = await generateResponse(normalizedMessage, user._id);
+
+    res.json({
+      message: response,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Chatbot error:', error);
+    res.status(500).json({ message: 'Failed to process message' });
+  }
+});
+
+// Generate intelligent response based on user query
+async function generateResponse(message, userId) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  // If the message is a financial data query, use rules. Otherwise, use LLM.
+  const isFinancialQuery = [
+    'spending', 'spent', 'expense',
+    'income', 'earn', 'salary',
+    'budget', 'limit',
+    'debt', 'owe', 'loan',
+    'save', 'saving',
+    'balance', 'account',
+    'tip', 'advice', 'help', 'suggest',
+    'summary', 'net worth'
+  ].some(keyword => message.includes(keyword));
+
+  if (!isFinancialQuery) {
+    // Use local LLM for general chat or advice
+    try {
+      const llmPrompt = `You are a helpful financial assistant. User: ${message}\nAssistant:`;
+      const llmResponse = await queryLLM(llmPrompt, { max_tokens: 128 });
+      if (llmResponse && typeof llmResponse === 'string' && llmResponse.trim().length > 0) {
+        return llmResponse.trim();
+      }
+    } catch (err) {
+      // If LLM fails, fallback to default
+      console.error('[Chatbot] LLM fallback:', err.message);
+    }
+  }
+
+  // Spending patterns
+  if (message.includes('spending') || message.includes('spent') || message.includes('expense')) {
+    const expenses = await Expense.find({
+      userId,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    }).populate('categoryId');
+
+    const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    
+    if (expenses.length === 0) {
+      return "You haven't recorded any expenses this month yet. Start tracking your spending to get personalized insights!";
+    }
+
+    // Group by category
+    const byCategory = {};
+    expenses.forEach(exp => {
+      const catName = exp.categoryId?.name || 'Uncategorized';
+      byCategory[catName] = (byCategory[catName] || 0) + exp.amount;
+    });
+
+    const topCategory = Object.entries(byCategory)
+      .sort((a, b) => b[1] - a[1])[0];
+
+    return `This month, you've spent $${total.toFixed(2)} across ${expenses.length} transactions. Your highest spending category is ${topCategory[0]} at $${topCategory[1].toFixed(2)} (${((topCategory[1]/total)*100).toFixed(1)}% of total). ${
+      topCategory[1] > total * 0.4 ? "💡 Tip: Consider reviewing this category for potential savings!" : "Keep up the balanced spending!"
+    }`;
+  }
+
+  // Income queries
+  if (message.includes('income') || message.includes('earn') || message.includes('salary')) {
+    const incomes = await Income.find({
+      userId,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    }).populate('categoryId');
+
+    const total = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+    
+    if (incomes.length === 0) {
+      return "No income recorded this month. Add your income sources to track your cash flow better!";
+    }
+
+    return `Your total income this month is $${total.toFixed(2)} from ${incomes.length} source(s). ${
+      total > 0 ? "Great job earning! Make sure to allocate some towards savings and investments." : ""
+    }`;
+  }
+
+  // Budget queries
+  if (message.includes('budget') || message.includes('limit')) {
+    const budgets = await Budget.find({ userId }).populate('categoryId');
+    
+    if (budgets.length === 0) {
+      return "You don't have any budgets set up yet. Creating budgets helps you control spending and reach your financial goals! Go to the Budgets page to get started.";
+    }
+
+    const activeMonth = budgets.filter(b => 
+      b.period === 'monthly' && 
+      new Date(b.startDate) <= now && 
+      new Date(b.endDate) >= now
+    );
+
+    if (activeMonth.length === 0) {
+      return `You have ${budgets.length} budget(s) defined, but none are active for the current month. Consider creating monthly budgets to track your spending better!`;
+    }
+
+    const overBudget = activeMonth.filter(b => b.isExceeded);
+    const nearLimit = activeMonth.filter(b => b.percentageUsed >= 80 && !b.isExceeded);
+
+    if (overBudget.length > 0) {
+      return `⚠️ Alert! You've exceeded ${overBudget.length} budget(s) this month: ${overBudget.map(b => b.categoryId?.name).join(', ')}. Review your spending in these categories to get back on track!`;
+    }
+
+    if (nearLimit.length > 0) {
+      return `⚠️ Warning! You're approaching the limit on ${nearLimit.length} budget(s): ${nearLimit.map(b => `${b.categoryId?.name} (${b.percentageUsed.toFixed(1)}%)`).join(', ')}. Watch your spending carefully!`;
+    }
+
+    return `Looking good! All ${activeMonth.length} active budgets are under control. Keep up the disciplined spending! 🎉`;
+  }
+
+  // Debt queries
+  if (message.includes('debt') || message.includes('owe') || message.includes('loan')) {
+    console.log('[Chatbot] Debt query - userId:', userId, 'type:', typeof userId);
+    const debts = await Debt.find({ userId });
+    console.log('[Chatbot] Found debts:', debts.length);
+    if (debts.length > 0) {
+      console.log('[Chatbot] First debt:', debts[0].name, 'balance:', debts[0].currentBalance);
+    }
+    
+    if (debts.length === 0) {
+      return "Great news! You have no debts recorded. Stay debt-free by living within your means! 🎉";
+    }
+
+    const totalDebt = debts.reduce((sum, d) => sum + d.currentBalance, 0);
+    const totalOriginal = debts.reduce((sum, d) => sum + d.principal, 0);
+    const totalPaid = debts.reduce((sum, d) => sum + (d.totalPaid || 0), 0);
+    const progress = totalOriginal > 0 ? ((totalPaid / totalOriginal) * 100).toFixed(1) : 0;
+
+    const highestInterest = debts.sort((a, b) => b.interestRate - a.interestRate)[0];
+
+    return `You have ${debts.length} debt(s) totaling $${totalDebt.toFixed(2)}. You've paid off $${totalPaid.toFixed(2)} (${progress}% progress). 💡 Focus on paying off "${highestInterest.name}" first (${highestInterest.interestRate}% interest) to save on interest charges!`;
+  }
+
+  // Savings advice
+  if (message.includes('save') || message.includes('saving')) {
+    const expenses = await Expense.find({
+      userId,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+    const incomes = await Income.find({
+      userId,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
+    const netSavings = totalIncome - totalExpenses;
+    const savingsRate = totalIncome > 0 ? (netSavings / totalIncome * 100).toFixed(1) : 0;
+
+    if (netSavings > 0) {
+      return `This month, you're saving $${netSavings.toFixed(2)} (${savingsRate}% savings rate). ${
+        savingsRate >= 20 ? "Excellent! You're on track for strong financial health! 🌟" :
+        savingsRate >= 10 ? "Good job! Try to increase this to 20% for optimal financial security." :
+        "Consider increasing your savings rate to at least 20% of your income."
+      }`;
+    } else {
+      return `You're currently spending more than you earn this month (deficit: $${Math.abs(netSavings).toFixed(2)}). Review your expenses and look for areas to cut back. Start with discretionary spending!`;
+    }
+  }
+
+  // Account balance
+  if (message.includes('balance') || message.includes('account')) {
+    const accounts = await Account.find({ userId });
+    
+    if (accounts.length === 0) {
+      return "You don't have any accounts set up. Add your bank accounts, credit cards, and wallets to track your total balance!";
+    }
+
+    const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    const byType = {};
+    accounts.forEach(acc => {
+      byType[acc.type] = (byType[acc.type] || 0) + acc.balance;
+    });
+
+    return `Your total balance across ${accounts.length} account(s) is $${totalBalance.toFixed(2)}. ${
+      Object.entries(byType).map(([type, bal]) => `${type}: $${bal.toFixed(2)}`).join(', ')
+    }. ${totalBalance > 0 ? "Keep building your wealth! 💰" : "Consider ways to increase your income or reduce expenses."}`;
+  }
+
+  // Tips and advice
+  if (message.includes('tip') || message.includes('advice') || message.includes('help') || message.includes('suggest')) {
+    const tips = [
+      "💡 Follow the 50/30/20 rule: 50% for needs, 30% for wants, 20% for savings and debt repayment.",
+      "💡 Build an emergency fund covering 3-6 months of expenses before investing aggressively.",
+      "💡 Pay off high-interest debts first to save money on interest charges.",
+      "💡 Track every expense, no matter how small - awareness is the first step to better financial habits.",
+      "💡 Automate your savings by setting up automatic transfers on payday.",
+      "💡 Review subscriptions monthly and cancel ones you don't use regularly.",
+      "💡 Use the 24-hour rule for non-essential purchases over $50 to avoid impulse buying.",
+      "💡 Increase your income through side hustles or skill development for faster financial growth.",
+      "💡 Set specific financial goals (SMART: Specific, Measurable, Achievable, Relevant, Time-bound).",
+      "💡 Review your spending weekly to catch issues early before they become habits."
+    ];
+    
+    return tips[Math.floor(Math.random() * tips.length)];
+  }
+
+  // Summary/overview
+  if (message.includes('summary') || message.includes('overview') || message.includes('report')) {
+    const [expenses, incomes, budgets, debts, accounts] = await Promise.all([
+      Expense.find({ userId, date: { $gte: startOfMonth, $lte: endOfMonth } }),
+      Income.find({ userId, date: { $gte: startOfMonth, $lte: endOfMonth } }),
+      Budget.find({ userId }),
+      Debt.find({ userId }),
+      Account.find({ userId })
+    ]);
+
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
+    const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const totalDebt = debts.reduce((sum, d) => sum + d.currentBalance, 0);
+    const netWorth = totalBalance - totalDebt;
+
+    return `📊 Financial Summary for ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}:
+
+💰 Total Balance: $${totalBalance.toFixed(2)}
+📈 Income: $${totalIncome.toFixed(2)}
+📉 Expenses: $${totalExpenses.toFixed(2)}
+💵 Net Savings: $${(totalIncome - totalExpenses).toFixed(2)}
+💳 Total Debt: $${totalDebt.toFixed(2)}
+🏆 Net Worth: $${netWorth.toFixed(2)}
+
+${budgets.length} active budget(s), ${accounts.length} account(s). Keep tracking your progress! 🚀`;
+  }
+
+  // Default response with suggestions
+  return `I'm your financial assistant! I can help you with:
+
+• "Show my spending" - Analyze your expenses
+• "How's my budget?" - Check budget status
+• "What's my income?" - View income summary
+• "Check my debts" - Debt overview and advice
+• "Savings advice" - Get savings tips
+• "Account balance" - See all account balances
+• "Financial summary" - Complete overview
+• "Give me a tip" - Random financial advice
+
+What would you like to know? 💬`;
+}
+
+
+module.exports = router;
