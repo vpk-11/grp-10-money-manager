@@ -18,7 +18,7 @@ const Accounts = () => {
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to load accounts');
     },
-  });
+  }); 
 
   const deleteAccountMutation = useMutation({
     mutationFn: (id) => api.delete(`/accounts/${id}`),
