@@ -10,12 +10,12 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// // Rate limiting
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100 // limit each IP to 100 requests per windowMs
+// });
+// app.use(limiter);
 
 // CORS configuration
 app.use(cors({
@@ -35,6 +35,9 @@ app.use('/api/expense-categories', require('./routes/expenseCategories'));
 app.use('/api/income-categories', require('./routes/incomeCategories'));
 app.use('/api/accounts', require('./routes/accounts'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/budgets', require('./routes/budgets'));
+app.use('/api/debts', require('./routes/debts'));
+app.use('/api/chatbot', require('./routes/chatbot'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -51,7 +54,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
@@ -65,6 +68,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-t
 })
 .catch((error) => {
   console.error('MongoDB connection error:', error);
+  // Exit on DB connection error in all environments to avoid running without required datastore.
   process.exit(1);
 });
 
