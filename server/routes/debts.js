@@ -59,6 +59,10 @@ router.post('/',
         ...req.body,
         userId: req.user._id
       });
+
+      if (!debt.totalPaid || debt.totalPaid === 0) {
+        debt.totalPaid = Math.max(0, debt.principal - debt.currentBalance);
+      }
       
       // Calculate estimated payoff date
       debt.estimatedPayoffDate = debt.calculateEstimatedPayoff();
@@ -109,11 +113,11 @@ router.put('/:id', auth, async (req, res) => {
 
 // Record a payment
 router.post('/:id/payment',
-  auth,
+  auth, 
   [
     body('amount').isFloat({ min: 0 }).withMessage('Payment amount must be a positive number'),
     body('date').optional().isISO8601().withMessage('Invalid date format')
-  ],
+  ], 
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -133,22 +137,17 @@ router.post('/:id/payment',
       const { amount, date } = req.body;
       const paymentAmount = parseFloat(amount);
       
-      // Update debt
-      debt.currentBalance = Math.max(0, debt.currentBalance - paymentAmount);
-      debt.totalPaid += paymentAmount;
-      debt.lastPaymentDate = date || new Date();
-      debt.lastPaymentAmount = paymentAmount;
-      
+      const paymentDate = date ? new Date(date) : new Date();
+      console.log('typeof debt.applyPayment:', typeof debt.applyPayment); 
+      await debt.applyPayment(paymentAmount, paymentDate);
+    
       // If paid off, update status
       if (debt.currentBalance === 0) {
         debt.status = 'paid_off';
-        debt.payoffDate = new Date();
+        debt.payoffDate = paymentDate;
+        await debt.save();
       }
-      
-      // Recalculate estimated payoff date
-      debt.estimatedPayoffDate = debt.calculateEstimatedPayoff();
-      
-      await debt.save();
+
       res.json(debt);
     } catch (error) {
       console.error('Error recording payment:', error);

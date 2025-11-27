@@ -216,7 +216,7 @@ const Debts = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{analytics.debtCount} active</p>
           </div>
           <div className="card bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border-l-4 border-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Paid Off</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300"></p>
             <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{formatCurrency(analytics.totalPaid)}</p>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 font-medium">🎉 You're winning!</p>
           </div>
