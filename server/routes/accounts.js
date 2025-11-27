@@ -72,7 +72,7 @@ router.post('/', auth, [
     await account.save();
 
     res.status(201).json({
-      message: 'Account created successfully',
+      message: 'Account successfully created',
       account
     });
   } catch (error) {
@@ -130,7 +130,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Account not found' });
     }
 
-    res.json({ message: 'Account deleted successfully' });
+    res.json({ message: 'Account successfully deleted' });
   } catch (error) {
     console.error('Delete account error:', error);
     res.status(500).json({ message: 'Server error' });
