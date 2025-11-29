@@ -223,18 +223,36 @@ router.get('/analytics/summary', auth, async (req, res) => {
       userId: req.user._id,
       status: 'active'
     });
-    
+
+    // Total remaining (Σ currentBalance)
     const totalDebt = debts.reduce((sum, debt) => sum + debt.currentBalance, 0);
+
+    // Total original principal (Σ principal)
     const totalPrincipal = debts.reduce((sum, debt) => sum + debt.principal, 0);
-    const totalPaid = debts.reduce((sum, debt) => sum + debt.totalPaid, 0);
-    const totalMonthlyPayment = debts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
-    
-    // Calculate weighted average interest rate
+
+    // Total paid OFF in principal terms: Σ (principal - currentBalance)
+    const totalPaidOff = debts.reduce((sum, debt) => {
+      const paidOnThisDebt = Math.max(0, debt.principal - debt.currentBalance);
+      return sum + paidOnThisDebt;
+    }, 0);
+
+    // (Optional) actual total payments made (principal + interest) from field
+    const totalActualPaid = debts.reduce(
+      (sum, debt) => sum + (debt.totalPaid || 0),
+      0
+    );
+
+    const totalMonthlyPayment = debts.reduce(
+      (sum, debt) => sum + debt.minimumPayment,
+      0
+    );
+
+    // Weighted average interest rate
     const weightedInterest = debts.reduce((sum, debt) => {
       return sum + (debt.interestRate * debt.currentBalance);
     }, 0);
     const avgInterestRate = totalDebt > 0 ? weightedInterest / totalDebt : 0;
-    
+
     // Group by type
     const debtByType = debts.reduce((acc, debt) => {
       if (!acc[debt.type]) {
@@ -249,21 +267,29 @@ router.get('/analytics/summary', auth, async (req, res) => {
       acc[debt.type].totalMinPayment += debt.minimumPayment;
       return acc;
     }, {});
-    
+
     res.json({
-      totalDebt,
-      totalPrincipal,
-      totalPaid,
+      totalDebt,                    
+      totalPrincipal,               
+      totalPaid: totalPaidOff,      
+      totalActualPaid,              
       totalMonthlyPayment,
       avgInterestRate: avgInterestRate.toFixed(2),
       debtCount: debts.length,
       debtByType,
-      percentagePaidOff: totalPrincipal > 0 ? ((totalPrincipal - totalDebt) / totalPrincipal * 100).toFixed(2) : 0
+      percentagePaidOff:
+        totalPrincipal > 0
+          ? ((totalPaidOff / totalPrincipal) * 100).toFixed(2)
+          : 0
     });
   } catch (error) {
     console.error('Error fetching debt analytics:', error);
-    res.status(500).json({ message: 'Error fetching debt analytics', error: error.message });
+    res.status(500).json({
+      message: 'Error fetching debt analytics',
+      error: error.message
+    });
   }
 });
+
 
 module.exports = router;
