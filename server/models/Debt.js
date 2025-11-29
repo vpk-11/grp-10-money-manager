@@ -166,6 +166,28 @@ debtSchema.methods.calculateEstimatedPayoff = function() {
   return estimatedDate;
 };
 
+debtSchema.methods.applyPayment = async function (amount, date = new Date()) {
+  if (amount <= 0) {
+    throw new Error('Payment amount must be positive');
+  }
+
+  // Update last payment info
+  this.lastPaymentAmount = amount;
+  this.lastPaymentDate = date;
+
+  // Increase totalPaid
+  this.totalPaid = (this.totalPaid || 0) + amount;
+
+  // Optionally reduce currentBalance (very simplified)
+  this.currentBalance = Math.max(0, this.currentBalance - amount);
+
+  // Optionally recalc estimated payoff date
+  this.estimatedPayoffDate = this.calculateEstimatedPayoff();
+
+  return this.save();
+};
+
+
 // Ensure virtuals are included in JSON
 debtSchema.set('toJSON', { virtuals: true });
 debtSchema.set('toObject', { virtuals: true });
