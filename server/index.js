@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { initializeDebtReminderScheduler } = require('./utils/debtReminderScheduler');
 require('dotenv').config();
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/budgets', require('./routes/budgets'));
 app.use('/api/debts', require('./routes/debts'));
 app.use('/api/chatbot', require('./routes/chatbot'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -65,6 +67,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-t
 })
 .then(() => {
   console.log('Connected to MongoDB');
+  
+  // Initialize debt reminder scheduler after DB connection
+  initializeDebtReminderScheduler();
 })
 .catch((error) => {
   console.error('MongoDB connection error:', error);
