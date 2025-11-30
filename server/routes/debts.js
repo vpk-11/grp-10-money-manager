@@ -3,6 +3,9 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const auth = require('../middleware/auth');
 const Debt = require('../models/Debt');
+const User = require('../models/User');
+const { sendDebtReminderEmail } = require('../utils/emailService');
+const { createDebtDueSoonNotification } = require('../utils/notifications');
 
 // Get all debts for user
 router.get('/', auth, async (req, res) => {
@@ -55,14 +58,18 @@ router.post('/',
     }
 
     try {
-      const debt = new Debt({
+      const debtData = {
         ...req.body,
         userId: req.user._id
-      });
-
-      if (!debt.totalPaid || debt.totalPaid === 0) {
-        debt.totalPaid = Math.max(0, debt.principal - debt.currentBalance);
+      };
+      
+      // Calculate totalPaid based on principal and current balance
+      // If currentBalance < principal, then totalPaid = principal - currentBalance
+      if (!debtData.totalPaid && debtData.principal && debtData.currentBalance) {
+        debtData.totalPaid = Math.max(0, debtData.principal - debtData.currentBalance);
       }
+      
+      const debt = new Debt(debtData);
       
       // Calculate estimated payoff date
       debt.estimatedPayoffDate = debt.calculateEstimatedPayoff();
@@ -91,7 +98,7 @@ router.put('/:id', auth, async (req, res) => {
     const allowedUpdates = [
       'name', 'type', 'currentBalance', 'interestRate', 'minimumPayment',
       'dueDate', 'lender', 'accountNumber', 'status', 'reminderEnabled',
-      'reminderDaysBefore', 'notes', 'color'
+      'reminderDaysBefore', 'notes', 'color', 'totalPaid', 'lastPaymentDate', 'lastPaymentAmount'
     ];
     
     allowedUpdates.forEach(field => {
@@ -113,11 +120,11 @@ router.put('/:id', auth, async (req, res) => {
 
 // Record a payment
 router.post('/:id/payment',
-  auth, 
+  auth,
   [
     body('amount').isFloat({ min: 0 }).withMessage('Payment amount must be a positive number'),
     body('date').optional().isISO8601().withMessage('Invalid date format')
-  ], 
+  ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -137,17 +144,22 @@ router.post('/:id/payment',
       const { amount, date } = req.body;
       const paymentAmount = parseFloat(amount);
       
-      const paymentDate = date ? new Date(date) : new Date();
-      console.log('typeof debt.applyPayment:', typeof debt.applyPayment); 
-      await debt.applyPayment(paymentAmount, paymentDate);
-    
+      // Update debt
+      debt.currentBalance = Math.max(0, debt.currentBalance - paymentAmount);
+      debt.totalPaid += paymentAmount;
+      debt.lastPaymentDate = date || new Date();
+      debt.lastPaymentAmount = paymentAmount;
+      
       // If paid off, update status
       if (debt.currentBalance === 0) {
         debt.status = 'paid_off';
-        debt.payoffDate = paymentDate;
-        await debt.save();
+        debt.payoffDate = new Date();
       }
-
+      
+      // Recalculate estimated payoff date
+      debt.estimatedPayoffDate = debt.calculateEstimatedPayoff();
+      
+      await debt.save();
       res.json(debt);
     } catch (error) {
       console.error('Error recording payment:', error);
@@ -216,6 +228,62 @@ router.get('/reminders/upcoming', auth, async (req, res) => {
   }
 });
 
+// Send debt reminders (for scheduled tasks or manual trigger)
+router.post('/reminders/send', auth, async (req, res) => {
+  try {
+    const debts = await Debt.find({
+      userId: req.user._id,
+      status: 'active',
+      reminderEnabled: true
+    });
+    
+    const user = await User.findById(req.user._id);
+    const today = new Date();
+    const sentReminders = [];
+    
+    for (const debt of debts) {
+      const nextPayment = debt.nextPaymentDate;
+      if (!nextPayment) continue;
+      
+      const daysUntilDue = Math.ceil((nextPayment - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilDue <= debt.reminderDaysBefore && daysUntilDue >= 0) {
+        // Create in-app notification
+        await createDebtDueSoonNotification(
+          req.user._id,
+          debt.name,
+          nextPayment.toLocaleDateString(),
+          debt.minimumPayment,
+          daysUntilDue
+        );
+        
+        // Send email notification
+        await sendDebtReminderEmail(
+          user.email,
+          user.name,
+          debt.name,
+          nextPayment.toLocaleDateString(),
+          debt.minimumPayment
+        );
+        
+        sentReminders.push({
+          debtName: debt.name,
+          dueDate: nextPayment,
+          daysUntilDue
+        });
+      }
+    }
+    
+    res.json({
+      message: `Sent ${sentReminders.length} reminder(s)`,
+      reminders: sentReminders
+    });
+  } catch (error) {
+    console.error('Error sending debt reminders:', error);
+    res.status(500).json({ message: 'Error sending debt reminders', error: error.message });
+  }
+});
+
 // Get debt summary/analytics
 router.get('/analytics/summary', auth, async (req, res) => {
   try {
@@ -223,36 +291,18 @@ router.get('/analytics/summary', auth, async (req, res) => {
       userId: req.user._id,
       status: 'active'
     });
-
-    // Total remaining (Σ currentBalance)
+    
     const totalDebt = debts.reduce((sum, debt) => sum + debt.currentBalance, 0);
-
-    // Total original principal (Σ principal)
     const totalPrincipal = debts.reduce((sum, debt) => sum + debt.principal, 0);
-
-    // Total paid OFF in principal terms: Σ (principal - currentBalance)
-    const totalPaidOff = debts.reduce((sum, debt) => {
-      const paidOnThisDebt = Math.max(0, debt.principal - debt.currentBalance);
-      return sum + paidOnThisDebt;
-    }, 0);
-
-    // (Optional) actual total payments made (principal + interest) from field
-    const totalActualPaid = debts.reduce(
-      (sum, debt) => sum + (debt.totalPaid || 0),
-      0
-    );
-
-    const totalMonthlyPayment = debts.reduce(
-      (sum, debt) => sum + debt.minimumPayment,
-      0
-    );
-
-    // Weighted average interest rate
+    const totalPaid = debts.reduce((sum, debt) => sum + debt.totalPaid, 0);
+    const totalMonthlyPayment = debts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
+    
+    // Calculate weighted average interest rate
     const weightedInterest = debts.reduce((sum, debt) => {
       return sum + (debt.interestRate * debt.currentBalance);
     }, 0);
     const avgInterestRate = totalDebt > 0 ? weightedInterest / totalDebt : 0;
-
+    
     // Group by type
     const debtByType = debts.reduce((acc, debt) => {
       if (!acc[debt.type]) {
@@ -267,29 +317,21 @@ router.get('/analytics/summary', auth, async (req, res) => {
       acc[debt.type].totalMinPayment += debt.minimumPayment;
       return acc;
     }, {});
-
+    
     res.json({
-      totalDebt,                    
-      totalPrincipal,               
-      totalPaid: totalPaidOff,      
-      totalActualPaid,              
+      totalDebt,
+      totalPrincipal,
+      totalPaid,
       totalMonthlyPayment,
       avgInterestRate: avgInterestRate.toFixed(2),
       debtCount: debts.length,
       debtByType,
-      percentagePaidOff:
-        totalPrincipal > 0
-          ? ((totalPaidOff / totalPrincipal) * 100).toFixed(2)
-          : 0
+      percentagePaidOff: totalPrincipal > 0 ? ((totalPrincipal - totalDebt) / totalPrincipal * 100).toFixed(2) : 0
     });
   } catch (error) {
     console.error('Error fetching debt analytics:', error);
-    res.status(500).json({
-      message: 'Error fetching debt analytics',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Error fetching debt analytics', error: error.message });
   }
 });
-
 
 module.exports = router;

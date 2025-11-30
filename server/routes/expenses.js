@@ -2,7 +2,12 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Expense = require('../models/Expense');
 const Account = require('../models/Account');
+const Budget = require('../models/Budget');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { createBudgetExceededNotification, createBudgetWarningNotification } = require('../utils/notifications');
+const { sendBudgetExceededEmail } = require('../utils/emailService');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -114,6 +119,14 @@ router.post('/', auth, [
     account.balance -= amount;
     await account.save();
 
+    // Check budget and create notifications if needed
+    try {
+      await checkBudgetAndNotify(req.user._id, categoryId, amount);
+    } catch (budgetError) {
+      console.error('Budget check error:', budgetError);
+      // Don't fail the expense creation if budget check fails
+    }
+
     const populatedExpense = await Expense.findById(expense._id)
       .populate('categoryId', 'name color icon')
       .populate('accountId', 'name type');
@@ -206,5 +219,77 @@ router.delete('/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Helper function to check budget and send notifications
+async function checkBudgetAndNotify(userId, categoryId, newExpenseAmount) {
+  try {
+    // Find active budget for this category
+    const budget = await Budget.findOne({
+      userId,
+      categoryId,
+      isActive: true
+    }).populate('categoryId', 'name');
+
+    if (!budget) return; // No budget set for this category
+
+    // Calculate date range for budget period
+    const start = new Date(budget.startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(budget.startDate);
+    if (budget.period === 'weekly') end.setDate(end.getDate() + 7);
+    else if (budget.period === 'yearly') end.setFullYear(end.getFullYear() + 1);
+    else end.setMonth(end.getMonth() + 1);
+    end.setHours(23, 59, 59, 999);
+
+    // Calculate total spent in this budget period
+    const spentResult = await Expense.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          categoryId: new mongoose.Types.ObjectId(categoryId),
+          date: { $gte: start, $lte: end }
+        }
+      },
+      { $group: { _id: null, spent: { $sum: '$amount' } } }
+    ]);
+
+    const totalSpent = spentResult[0]?.spent || 0;
+    const percentage = (totalSpent / budget.amount) * 100;
+
+    const user = await User.findById(userId);
+    const categoryName = budget.categoryId.name;
+
+    // Budget exceeded (100%)
+    if (totalSpent > budget.amount) {
+      await createBudgetExceededNotification(
+        userId,
+        categoryName,
+        budget.amount,
+        totalSpent
+      );
+
+      await sendBudgetExceededEmail(
+        user.email,
+        user.name,
+        categoryName,
+        budget.amount,
+        totalSpent
+      );
+    }
+    // Budget warning (80% threshold)
+    else if (percentage >= 80 && percentage < 100) {
+      await createBudgetWarningNotification(
+        userId,
+        categoryName,
+        budget.amount,
+        totalSpent
+      );
+    }
+  } catch (error) {
+    console.error('Check budget error:', error);
+    throw error;
+  }
+}
 
 module.exports = router;
