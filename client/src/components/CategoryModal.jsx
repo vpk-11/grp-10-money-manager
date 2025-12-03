@@ -141,19 +141,22 @@ const CategoryModal = ({ isOpen, onClose, category, type = 'expense' }) => {
                 <div className="grid grid-cols-2 gap-4">
                   {/* Color picker */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Color
-                    </label>
-                    <div className="mt-1 flex items-center space-x-3">
-                      <input
-                        {...register('color', { required: 'Color is required' })}
-                        type="color"
-                        className="h-10 w-20 rounded border border-gray-300"
-                      />
-                      <span className="text-sm text-gray-500">
-                        Choose a color to identify this category
-                      </span>
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700">Color</label>
+                    <select
+                      {...register('color')}
+                      className="input mt-1"
+                    >
+                      <option value="#3B82F6">Blue</option>
+                      <option value="#EF4444">Red</option>
+                      <option value="#10B981">Green</option>
+                      <option value="#FACC15">Yellow</option>
+                      <option value="#8B5CF6">Purple</option>
+                      <option value="#14B8A6">Teal</option>
+                      <option value="#F59E0B">Amber</option>
+                      <option value="#6366F1">Indigo</option>
+                      <option value="#FB923C">Orange</option>
+                      <option value="#EC4899">Pink</option>
+                    </select>
                     {errors.color && (
                       <p className="mt-1 text-sm text-red-600">{errors.color.message}</p>
                     )}

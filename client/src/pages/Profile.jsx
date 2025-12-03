@@ -26,7 +26,7 @@ const Profile = () => {
         toast.error(result.message);
       }
     } catch (error) {
-      toast.error('Failed to update profile');  
+      toast.error('Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }

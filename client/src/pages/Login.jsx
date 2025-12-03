@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -11,29 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
 
-  // ⚠️ TODO: REMOVE THIS BEFORE PRODUCTION - Admin bypass for testing only
-  // TASK FOR DEVELOPER A: Remove this entire section before final deployment
-  const ADMIN_BYPASS = {
-    email: 'admin@test.com',
-    password: 'admin123'
-  };
-
   const onSubmit = async (data) => {
-    // Admin bypass for testing (REMOVE IN PRODUCTION)
-    if (data.email === ADMIN_BYPASS.email && data.password === ADMIN_BYPASS.password) {
-      toast.success('⚠️ Admin bypass login successful! (Testing Only)');
-      // Set a dummy token for testing
-      localStorage.setItem('token', 'admin-test-token-12345');
-      // Mock user data
-      localStorage.setItem('user', JSON.stringify({
-        name: 'Admin User',
-        email: 'admin@test.com',
-        _id: 'admin-id-123'
-      }));
-      navigate('/dashboard');
-      return;
-    }
-
     // Normal login flow
     const result = await login(data.email, data.password);
     
@@ -46,13 +25,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
             Or{' '}
             <Link
               to="/register"
@@ -61,18 +43,12 @@ const Login = () => {
               create a new account
             </Link>
           </p>
-          {/* Testing credentials hint */}
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-xs text-yellow-800 text-center">
-              <strong>Test Mode:</strong> Use admin@test.com / admin123 to bypass login
-            </p>
-          </div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -98,7 +74,7 @@ const Login = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Password
               </label>
               <div className="mt-1 relative">
