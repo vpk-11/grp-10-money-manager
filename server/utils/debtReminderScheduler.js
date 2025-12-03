@@ -9,7 +9,7 @@ const { createDebtDueSoonNotification, createDebtOverdueNotification } = require
  */
 async function checkAndSendDebtReminders() {
   try {
-    console.log('\n🔔 Starting debt reminder check...');
+    console.log('\n Starting debt reminder check...');
     
     // Find all active debts with reminders enabled
     const debts = await Debt.find({
@@ -76,7 +76,7 @@ async function checkAndSendDebtReminders() {
           );
 
           sentCount++;
-          console.log(`⚠ Sent overdue notice for ${debt.name} to ${debt.userId.email}`);
+          console.log(`Sent overdue notice for ${debt.name} to ${debt.userId.email}`);
         } catch (error) {
           console.error(`✗ Failed to send overdue notice for ${debt.name}:`, error.message);
           skippedCount++;
@@ -86,7 +86,7 @@ async function checkAndSendDebtReminders() {
       }
     }
 
-    console.log(`\n✅ Debt reminder check complete:`);
+    console.log(`\n Debt reminder check complete:`);
     console.log(`   - Reminders sent: ${sentCount}`);
     console.log(`   - Skipped: ${skippedCount}`);
     console.log(`   - Total debts checked: ${debts.length}\n`);
@@ -104,7 +104,7 @@ async function checkAndSendDebtReminders() {
  */
 function initializeDebtReminderScheduler() {
   // Run immediately on startup
-  console.log('🚀 Initializing debt reminder scheduler...');
+  console.log('Initializing debt reminder scheduler...');
   
   // Run check once at startup (after a 5 second delay to let server initialize)
   setTimeout(() => {
@@ -140,7 +140,7 @@ function initializeDebtReminderScheduler() {
       }, 24 * 60 * 60 * 1000); // 24 hours
     }, msUntilNext9AM);
     
-    console.log(`⏰ Next debt reminder check scheduled for: ${next9AM.toLocaleString()}`);
+    console.log(` Next debt reminder check scheduled for: ${next9AM.toLocaleString()}`);
   };
 
   scheduleDaily();
