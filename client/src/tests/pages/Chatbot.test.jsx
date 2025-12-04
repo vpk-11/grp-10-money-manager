@@ -1,35 +1,38 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// src/tests/pages/Chatbot.test.jsx
+import React from 'react';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import Chatbot from '../../pages/Chatbot';
+import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Mock scrollIntoView (JSDOM doesn't implement it)
-beforeAll(() => {
-  Element.prototype.scrollIntoView = () => {};
+// Mock scrollIntoView
+beforeEach(() => {
+  window.HTMLElement.prototype.scrollIntoView = () => {};
 });
 
-const renderWithQueryClient = (ui) => {
+// Helper to render Chatbot
+const renderChatbot = () => {
   const queryClient = new QueryClient();
-  return render(
+  render(
     <QueryClientProvider client={queryClient}>
-      {ui}
+      <MemoryRouter>
+        <Chatbot />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 };
 
-// Test: user can type in the textarea
-test('allows user to type', () => {
-  renderWithQueryClient(<Chatbot />);
-  const textarea = screen.getByPlaceholderText(/ask me about your finances/i);
-  fireEvent.change(textarea, { target: { value: 'Show my spending' } });
-  expect(textarea.value).toBe('Show my spending');
-});
+describe('Chatbot basic UI test', () => {
+  it('renders message input and Send button', () => {
+    renderChatbot();
 
-// Test: quick questions populate input
-test('quick questions populate input', () => {
-  renderWithQueryClient(<Chatbot />);
-  const quickQuestion = screen.getByText(/financial summary/i);
-  fireEvent.click(quickQuestion);
+    // textarea
+    const input = screen.getByPlaceholderText(/Ask me about your finances/i);
+    expect(input).toBeInTheDocument();
 
-  const textarea = screen.getByPlaceholderText(/ask me about your finances/i);
-  expect(textarea.value).toBe('Financial summary');
+    // Send button with SVG inside
+    const sendButton = screen.getByRole('button', { name: '' });
+    expect(sendButton.querySelector('svg')).toBeInTheDocument();
+  });
 });

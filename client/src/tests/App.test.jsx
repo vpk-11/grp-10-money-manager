@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "../App";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ThemeProvider } from "../contexts/ThemeContext"; // Added ThemeProvider
 import { vi } from "vitest";
 
 // Mock AuthProvider
@@ -18,12 +19,14 @@ const MockAuthProvider = ({ children }) => {
 // QueryClient for React Query
 const queryClient = new QueryClient();
 
-// Helper to render with providers
+// Helper to render with all required providers
 const renderWithProviders = (ui) => {
   return render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <MockAuthProvider>{ui}</MockAuthProvider>
+        <ThemeProvider>
+          <MockAuthProvider>{ui}</MockAuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>
   );
