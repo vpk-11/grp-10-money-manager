@@ -29,7 +29,7 @@ const sendEmail = async (to, subject, htmlContent, textContent) => {
   try {
     // If transporter not configured, log (test mode)
     if (!transporter) {
-      console.log('\n ===== EMAIL NOTIFICATION (TEST MODE) =====');
+      console.log('\n ===== EMAIL NOTIFICATION =====');
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);
       console.log(`Content:\n${textContent || htmlContent}`);
@@ -72,7 +72,7 @@ Money Manager Team
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #EF4444;">💳 Payment Reminder</h2>
+      <h2 style="color: #EF4444;">Payment Reminder</h2>
       <p>Hi <strong>${userName}</strong>,</p>
       <p>This is a friendly reminder that your payment for <strong>${debtName}</strong> is due soon.</p>
       <div style="background-color: #FEE2E2; padding: 15px; border-radius: 8px; margin: 20px 0;">
