@@ -1,16 +1,18 @@
-# Overview
+# Money Manager - AI Chatbot Integration
+
+## Overview
 
 The Smart Money Management and Financial Analysis Tool is designed to help students and early-stage professionals manage their money more effectively.
 It simplifies the process of tracking expenses, managing budgets, monitoring debts, and gaining financial insights through an intelligent chatbot.
 
 This tool supports users who are just starting their careers and learning how to balance expenses, debt payments, and savings. It brings clarity and organization to personal finance through automatic expense categorization, debt tracking, and AI-based insights that empower users to make smarter financial decisions.
 
-## Key Stakeholders
+### Key Stakeholders
 
 - Students and early-career professionals who need help managing their finances.  
 - Educational institutions that want to promote financial literacy.
 
-## Value Proposition
+### Value Proposition
 
 - Automates expense tracking and categorization.  
   * Example: Automatically groups expenses like rent, groceries, and bills.  
@@ -18,7 +20,7 @@ This tool supports users who are just starting their careers and learning how to
   * Example: Lets users ask natural questions like “How much did I spend on food this month?”
 
 
-# Features
+## Features
 
 1. Expense Monitoring & Categorization
 Automatically logs and categorizes spending (groceries, rent, utilities, entertainment) so users can easily see where their money goes each month.
@@ -43,22 +45,33 @@ Generates clean, downloadable reports in PDF or Excel summarizing monthly or yea
 Ensures all sensitive data is encrypted and protected with multi-factor authentication (MFA).
 
 
-# Authors & Contributors
+## Authors & Contributors
 
 * **Project Team:** Group 10  
 * **Course:** CompSci 520  
 
 
-# Setup Instructions
+## Setup Instructions
 
-## Prerequisites
+### Prerequisites
 - Node.js (v16+)
 - MongoDB
 - Ollama (for AI chatbot features)
 
-## Installation
+### Installation
 
-1. **Install Ollama** (for AI features)
+1. **Install Dependencies**
+   ```bash
+   # Server
+   cd server
+   npm install
+   
+   # Client
+   cd ../client
+   npm install
+   ```
+   
+2. **Install Ollama** (for AI features)
    ```bash
    # macOS
    brew install ollama
@@ -70,24 +83,13 @@ Ensures all sensitive data is encrypted and protected with multi-factor authenti
    # Download from https://ollama.com/download
    ```
 
-2. **Pull AI Models**
+3. **Pull AI Models**
    ```bash
    # Default model - lightweight and fast (1.3GB)
    ollama pull llama3.2:1b
    
    # Optional: Better accuracy (2.0GB)
    ollama pull llama3.2:3b
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   # Server
-   cd server
-   npm install
-   
-   # Client
-   cd ../client
-   npm install
    ```
 
 4. **Configure Environment Variables**
@@ -97,7 +99,7 @@ Ensures all sensitive data is encrypted and protected with multi-factor authenti
    PORT=5001
    MONGODB_URI=mongodb://localhost:27017/expense-tracker
    CLIENT_URL=http://localhost:5173
-   JWT_SECRET=your-secret-key-change-this-in-production
+   JWT_SECRET= <Input your preffered key>
    NODE_ENV=development
    OLLAMA_API_URL=http://localhost:11434
    OLLAMA_MODEL=llama3.2:1b
@@ -226,21 +228,3 @@ ollama pull llama3.2:1b
 **Slow Responses:**
 - Use Llama 3.2 1B (default, fastest)
 - Close other applications to free up RAM
-
-
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
