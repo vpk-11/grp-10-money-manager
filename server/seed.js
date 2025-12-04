@@ -16,9 +16,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-t
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('Connected to MongoDB'))
+.then(() => console.log('✅ Connected to MongoDB'))
 .catch((error) => {
-  console.error('MongoDB connection error:', error);
+  console.error('❌ MongoDB connection error:', error);
   process.exit(1);
 });
 
@@ -35,7 +35,7 @@ const seedData = async () => {
     await Debt.deleteMany({});
 
     // Create demo user
-    console.log(' Creating demo user...');
+    console.log('👤 Creating demo user...');
     const user = await User.create({
       name: 'John Doe',
       email: 'john@example.com',
@@ -86,7 +86,7 @@ const seedData = async () => {
       }
     ]);
 
-    console.log('Creating expense categories...');
+    console.log('📁 Creating expense categories...');
     const expenseCategories = await ExpenseCategory.create([
       {
         userId: user._id,
@@ -190,7 +190,7 @@ const seedData = async () => {
       }
     ]);
 
-    console.log('Creating income categories...');
+    console.log('📁 Creating income categories...');
     const incomeCategories = await IncomeCategory.create([
       {
         userId: user._id,
@@ -234,7 +234,7 @@ const seedData = async () => {
       }
     ]);
 
-    console.log('Creating income records...');
+    console.log('💰 Creating income records...');
     const now = new Date();
     const incomes = [];
     
@@ -271,7 +271,7 @@ const seedData = async () => {
     
     await Income.create(incomes);
 
-    console.log('Creating expense records...');
+    console.log('💸 Creating expense records...');
     const expenses = [];
     const today = new Date();
     
@@ -549,8 +549,8 @@ const seedData = async () => {
       await debt.save();
     }
 
-    console.log('\nSeed data created successfully!');
-    console.log('\nSummary:');
+    console.log('\n✅ Seed data created successfully!');
+    console.log('\n📊 Summary:');
     console.log(`   Users: 1`);
     console.log(`   Accounts: ${accounts.length}`);
     console.log(`   Expense Categories: ${expenseCategories.length}`);
@@ -566,7 +566,7 @@ const seedData = async () => {
 
     process.exit(0);
   } catch (error) {
-    console.error('Error seeding data:', error);
+    console.error('❌ Error seeding data:', error);
     process.exit(1);
   }
 };

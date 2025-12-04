@@ -12,6 +12,9 @@ import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
 import Categories from './pages/Categories';
 import Profile from './pages/Profile';
+import Analytics from './pages/Analytics';
+import Budgets from './pages/Budgets';
+import Debts from './pages/Debts';
 import Chatbot from './pages/Chatbot';
 
 function App() {
@@ -30,12 +33,15 @@ function App() {
         <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="budgets" element={<Budgets />} />
+          <Route path="debts" element={<Debts />} />
+          <Route path="chatbot" element={<Chatbot />} />
           <Route path="accounts" element={<Accounts />} />
           <Route path="expenses" element={<Expenses />} />
           <Route path="incomes" element={<Incomes />} />
           <Route path="categories" element={<Categories />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="chatbot" element={<Chatbot />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>
       </Routes>

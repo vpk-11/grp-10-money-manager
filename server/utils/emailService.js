@@ -1,4 +1,5 @@
 // Email Service Utility
+// Sends real emails if SMTP env vars are set; otherwise logs to console (test mode)
 
 const nodemailer = require('nodemailer');
 
@@ -71,7 +72,7 @@ Money Manager Team
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #EF4444;">💳 Payment Reminder</h2>
+      <h2 style="color: #EF4444;">Payment Reminder</h2>
       <p>Hi <strong>${userName}</strong>,</p>
       <p>This is a friendly reminder that your payment for <strong>${debtName}</strong> is due soon.</p>
       <div style="background-color: #FEE2E2; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -88,7 +89,7 @@ Money Manager Team
 };
 
 const sendBudgetExceededEmail = async (userEmail, userName, categoryName, budgetAmount, spentAmount) => {
-  const subject = `⚠️ Budget Alert: ${categoryName}`;
+  const subject = `Budget Alert: ${categoryName}`;
   const exceededBy = spentAmount - budgetAmount;
   const percentage = ((spentAmount / budgetAmount) * 100).toFixed(1);
 
@@ -109,7 +110,7 @@ Money Manager Team
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #F59E0B;">⚠️ Budget Alert</h2>
+      <h2 style="color: #F59E0B;">Budget Alert</h2>
       <p>Hi <strong>${userName}</strong>,</p>
       <p>Your spending in the <strong>${categoryName}</strong> category has exceeded your budget!</p>
       <div style="background-color: #FEF3C7; padding: 15px; border-radius: 8px; margin: 20px 0;">
