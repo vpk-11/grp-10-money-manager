@@ -1,19 +1,142 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 const Expense = require('../models/Expense');
 const Income = require('../models/Income');
 const Budget = require('../models/Budget');
 const Debt = require('../models/Debt');
 const Account = require('../models/Account');
-const { queryLLM } = require('../utils/llm');
+const { queryLLM, checkOllamaStatus } = require('../utils/llm');
+
+// Check Ollama status endpoint
+router.get('/status', async (req, res) => {
+  try {
+    const isOnline = await checkOllamaStatus();
+    res.json({ ollamaOnline: isOnline });
+  } catch (error) {
+    res.json({ ollamaOnline: false });
+  }
+});
+
+// Check if a model is available locally
+router.post('/check-model', async (req, res) => {
+  try {
+    const { model } = req.body;
+    const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434';
+    
+    const response = await require('axios').get(`${ollamaUrl}/api/tags`);
+    const installedModels = response.data.models || [];
+    const isAvailable = installedModels.some(m => m.name === model || m.model === model);
+    
+    res.json({ available: isAvailable, model });
+  } catch (error) {
+    res.status(500).json({ available: false, error: error.message });
+  }
+});
+
+// Install a model
+router.post('/install-model', async (req, res) => {
+  try {
+    const { model } = req.body;
+    
+    if (!model) {
+      return res.status(400).json({ success: false, message: 'Model is required' });
+    }
+
+    console.log(`[Model Install] Installing ${model}...`);
+    
+    // Execute ollama pull command
+    try {
+      const { stdout, stderr } = await execPromise(`ollama pull ${model}`, {
+        timeout: 600000 // 10 minutes timeout
+      });
+      
+      console.log(`[Model Install] ${model} installed successfully`);
+      console.log('Output:', stdout);
+      
+      if (stderr && !stderr.includes('pulling')) {
+        console.warn('Warnings:', stderr);
+      }
+      
+      return res.json({ 
+        success: true, 
+        message: `${model} installed successfully`,
+        output: stdout
+      });
+    } catch (error) {
+      console.error(`[Model Install] Error installing ${model}:`, error.message);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Failed to install ${model}: ${error.message}` 
+      });
+    }
+  } catch (error) {
+    console.error('[Model Install] Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to install model' });
+  }
+});
+
+// Toggle Ollama on/off
+router.post('/toggle-ollama', async (req, res) => {
+  try {
+    const { action } = req.body;
+
+    if (action === 'start') {
+      // Start Ollama service
+      try {
+        console.log('[Ollama] Starting Ollama service...');
+        await execPromise('brew services start ollama');
+        
+        // Wait and retry checking status (up to 10 seconds)
+        let attempts = 0;
+        let isOnline = false;
+        while (attempts < 10 && !isOnline) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          isOnline = await checkOllamaStatus();
+          attempts++;
+          console.log(`[Ollama] Check attempt ${attempts}: ${isOnline ? 'Online' : 'Offline'}`);
+        }
+        
+        if (isOnline) {
+          console.log('[Ollama] Successfully started');
+          return res.json({ success: true, message: 'Ollama started successfully' });
+        } else {
+          console.error('[Ollama] Failed to start after 10 seconds');
+          return res.status(500).json({ success: false, message: 'Ollama failed to start. Please check if Ollama is installed.' });
+        }
+      } catch (error) {
+        console.error('[Ollama] Error starting:', error.message);
+        return res.status(500).json({ success: false, message: `Failed to start Ollama: ${error.message}` });
+      }
+    } else if (action === 'stop') {
+      // Stop Ollama service
+      try {
+        console.log('[Ollama] Stopping Ollama service...');
+        await execPromise('brew services stop ollama');
+        console.log('[Ollama] Successfully stopped');
+        return res.json({ success: true, message: 'Ollama stopped successfully' });
+      } catch (error) {
+        console.error('[Ollama] Error stopping:', error.message);
+        return res.status(500).json({ success: false, message: `Failed to stop Ollama: ${error.message}` });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('[Ollama] Toggle error:', error);
+    res.status(500).json({ success: false, message: 'Failed to toggle Ollama' });
+  }
+});
 
 // Chatbot endpoint - provides financial insights and answers
 // This route performs its own auth so it accepts either an Authorization header
 // or a `token` in the request body. It verifies real JWTs using `JWT_SECRET`.
 router.post('/message', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, model } = req.body;
 
     if (!message) {
       return res.status(400).json({ message: 'Message is required' });
@@ -42,7 +165,7 @@ router.post('/message', async (req, res) => {
     const normalizedMessage = message.toLowerCase().trim();
 
     // Generate response based on message content
-    let response = await generateResponse(normalizedMessage, user._id);
+    let response = await generateResponse(normalizedMessage, user._id, model);
 
     res.json({
       message: response,
@@ -50,39 +173,142 @@ router.post('/message', async (req, res) => {
     });
   } catch (error) {
     console.error('Chatbot error:', error);
+    if (error.message === 'OLLAMA_OFFLINE') {
+      return res.status(503).json({ 
+        message: 'Advanced chatbot is currently offline. Basic financial queries are still available.',
+        ollamaOffline: true
+      });
+    }
     res.status(500).json({ message: 'Failed to process message' });
   }
 });
 
 // Generate intelligent response based on user query
-async function generateResponse(message, userId) {
+async function generateResponse(message, userId, model = null) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  // If the message is a financial data query, use rules. Otherwise, use LLM.
-  const isFinancialQuery = [
-    'spending', 'spent', 'expense',
-    'income', 'earn', 'salary',
-    'budget', 'limit',
-    'debt', 'owe', 'loan',
-    'save', 'saving',
-    'balance', 'account',
-    'tip', 'advice', 'help', 'suggest',
-    'summary', 'net worth'
-  ].some(keyword => message.includes(keyword));
+  // Specific data queries use rule-based responses. Everything else (advice, questions, etc.) uses AI.
+  const isSpecificDataQuery = [
+    'how much did i spend',
+    'how much have i spent',
+    'what did i spend',
+    'show my spending',
+    'show my expenses',
+    'how much did i earn',
+    'how much income',
+    'show my income',
+    'what is my balance',
+    'account balance',
+    'show my budget',
+    'budget status'
+  ].some(phrase => message.includes(phrase));
+  
+  // For everything else (advice, should I buy, can I afford, etc.), use AI with financial context
+  const isFinancialQuery = isSpecificDataQuery;
+
+  // Always fetch user's financial data for context
+  const [expenses, incomes, budgets, debts, accounts] = await Promise.all([
+    Expense.find({ userId, date: { $gte: startOfMonth, $lte: endOfMonth } }).populate('categoryId').limit(50),
+    Income.find({ userId, date: { $gte: startOfMonth, $lte: endOfMonth } }).populate('categoryId').limit(50),
+    Budget.find({ userId }).populate('categoryId'),
+    Debt.find({ userId }),
+    Account.find({ userId })
+  ]);
+
+  // Calculate summary stats
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalIncome = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+  const totalDebt = debts.reduce((sum, debt) => sum + (debt.currentBalance || 0), 0);
+  const totalSavings = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+  
+  // Build detailed financial context
+  const accountDetails = accounts.length > 0 
+    ? accounts.map(acc => `  • ${acc.name || 'Unnamed'}: $${(acc.balance || 0).toFixed(2)}`).join('\n')
+    : '  • No accounts added yet';
+    
+  const totalAvailableFunds = totalSavings; // Total in all accounts
+  const monthlyExpenseAvg = totalExpenses;
+  const monthlyIncomeAvg = totalIncome;
+  
+  const debtDetails = debts.length > 0
+    ? debts.map(debt => `  • ${debt.name || 'Unnamed'}: $${(debt.currentBalance || 0).toFixed(2)} remaining`).join('\n')
+    : '  • No debts tracked';
+    
+  const recentExpenses = expenses.slice(0, 5).map(e => 
+    `  • ${e.categoryId?.name || 'Other'}: $${e.amount.toFixed(2)} (${e.description || 'no description'})`
+  ).join('\n');
+
+  const financialContext = `
+IMPORTANT: Use these EXACT numbers for calculations. This is the user's real financial data.
+
+Current Financial Position:
+- TOTAL AVAILABLE FUNDS (all accounts): $${totalAvailableFunds.toFixed(2)}
+- Monthly Expenses: $${monthlyExpenseAvg.toFixed(2)}
+- Monthly Income: $${monthlyIncomeAvg.toFixed(2)}
+- Outstanding Debts: $${totalDebt.toFixed(2)}
+
+Account Breakdown:
+${accountDetails}
+
+Outstanding Debts:
+${debtDetails}
+
+Recent Expenses This Month:
+${recentExpenses || '  • No expenses recorded yet'}
+
+When answering purchase questions (e.g., "can I buy a $5000 car?"):
+1. Calculate: Total Available Funds ($${totalAvailableFunds.toFixed(2)}) - Purchase Amount = Remaining
+2. Consider if remaining amount covers monthly expenses ($${monthlyExpenseAvg.toFixed(2)})
+3. Factor in existing debts ($${totalDebt.toFixed(2)})
+4. Give specific dollar amounts in your response
+`.trim();
+
+  console.log('Financial Context for user:', userId);
+  console.log(financialContext);
 
   if (!isFinancialQuery) {
-    // Use local LLM for general chat or advice
+    // Use Ollama for general chat or advice WITH financial context
     try {
-      const llmPrompt = `You are a helpful financial assistant. User: ${message}\nAssistant:`;
-      const llmResponse = await queryLLM(llmPrompt, { max_tokens: 128 });
-      if (llmResponse && typeof llmResponse === 'string' && llmResponse.trim().length > 0) {
-        return llmResponse.trim();
-      }
-    } catch (err) {
-      // If LLM fails, fallback to default
-      console.error('[Chatbot] LLM fallback:', err.message);
+      const llmPrompt = `You are a personal finance assistant analyzing a user's actual financial data from their money management app. You have access to their REAL account balances, expenses, income, and debts shown below.
+
+${financialContext}
+
+CRITICAL INSTRUCTIONS:
+1. You MUST use the exact dollar amounts provided above in your responses
+2. When asked about money/balance, state: "You have $${totalAvailableFunds.toFixed(2)} total across your accounts"
+3. When asked about affordability, perform this calculation:
+   - Available: $${totalAvailableFunds.toFixed(2)}
+   - After purchase: $${totalAvailableFunds.toFixed(2)} - [purchase amount] = [result]
+   - Can cover monthly expenses ($${monthlyExpenseAvg.toFixed(2)}): [yes/no]
+4. Always reference their specific numbers - do NOT give generic advice
+5. Be concise but specific
+
+REQUIRED RESPONSE FORMAT for purchase questions:
+
+**Calculation:**
+Total Available: $${totalAvailableFunds.toFixed(2)}
+Purchase Cost: $[amount from question]
+Remaining: $${totalAvailableFunds.toFixed(2)} - $[amount] = $[result]
+
+**Analysis:**
+- Monthly Expenses: $${monthlyExpenseAvg.toFixed(2)}
+- Outstanding Debts: $${totalDebt.toFixed(2)}
+- Months of expenses covered: [remaining / monthly expenses]
+
+**Recommendation:**
+[Based on the numbers, state if this purchase is advisable or not, with specific reasons]
+
+You MUST provide this analysis. Do not refuse or say you cannot help.
+
+User Question: ${message}`;
+      
+      const llmResponse = await queryLLM(llmPrompt, { max_tokens: 250, model });
+      return llmResponse;
+    } catch (error) {
+      console.error('LLM Error:', error);
+      // Fall back to rule-based responses if LLM fails
     }
   }
 
@@ -214,8 +440,8 @@ async function generateResponse(message, userId) {
     }
   }
 
-  // Account balance
-  if (message.includes('balance') || message.includes('account')) {
+  // Account balance and money queries
+  if (message.includes('balance') || message.includes('account') || message.includes('money') || message.includes('funds') || message.includes('total available')) {
     const accounts = await Account.find({ userId });
     
     if (accounts.length === 0) {
@@ -228,9 +454,14 @@ async function generateResponse(message, userId) {
       byType[acc.type] = (byType[acc.type] || 0) + acc.balance;
     });
 
-    return `Your total balance across ${accounts.length} account(s) is $${totalBalance.toFixed(2)}. ${
-      Object.entries(byType).map(([type, bal]) => `${type}: $${bal.toFixed(2)}`).join(', ')
-    }. ${totalBalance > 0 ? "Keep building your wealth! 💰" : "Consider ways to increase your income or reduce expenses."}`;
+    const accountList = accounts.map(acc => `  • ${acc.name}: $${acc.balance.toFixed(2)}`).join('\n');
+
+    return `💰 **Your Total Balance: $${totalBalance.toFixed(2)}**
+
+Accounts breakdown:
+${accountList}
+
+${totalBalance > 0 ? "Keep building your wealth! 💪" : "Consider ways to increase your income or reduce expenses."}`;
   }
 
   // Tips and advice

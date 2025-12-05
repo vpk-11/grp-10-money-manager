@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { sendWelcomeEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -41,6 +42,11 @@ router.post('/register', [
     });
 
     await user.save();
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail({ name: user.name, email: user.email })
+      .then(() => console.log('Welcome email sent to:', user.email))
+      .catch(err => console.error('Welcome email error:', err.message));
 
     // Generate token
     const token = generateToken(user._id);

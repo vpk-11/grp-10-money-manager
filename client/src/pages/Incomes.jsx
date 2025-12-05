@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query'; // changed
-import { Plus, Search } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, Edit2, Trash2, X } from 'lucide-react';
 import { api } from '../utils/api';
 import { formatCurrency, formatDate } from '../utils/format';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { toast } from 'react-hot-toast';
 
 const Incomes = () => {
   const [filters, setFilters] = useState({
@@ -15,6 +16,20 @@ const Incomes = () => {
     startDate: '',
     endDate: ''
   });
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [formData, setFormData] = useState({
+    amount: '',
+    description: '',
+    categoryId: '',
+    accountId: '',
+    date: new Date().toISOString().split('T')[0],
+    source: '',
+    paymentMethod: 'bank_transfer'
+  });
+
+  const queryClient = useQueryClient();
 
   const { data: incomesData, isLoading } = useQuery({
     queryKey: ['incomes', filters],
@@ -35,41 +50,123 @@ const Incomes = () => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 
+  // Save mutation (create/update)
+  const saveMutation = useMutation({
+    mutationFn: (data) => {
+      if (editingIncome) {
+        return api.put(`/incomes/${editingIncome._id}`, data);
+      }
+      return api.post('/incomes', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['incomes']);
+      queryClient.invalidateQueries(['dashboard']);
+      toast.success(editingIncome ? 'Income updated!' : 'Income created!');
+      handleCloseModal();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to save income');
+    }
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/incomes/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['incomes']);
+      queryClient.invalidateQueries(['dashboard']);
+      toast.success('Income deleted!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete income');
+    }
+  });
+
+  const handleOpenModal = (income = null) => {
+    if (income) {
+      setEditingIncome(income);
+      setFormData({
+        amount: income.amount,
+        description: income.description,
+        categoryId: income.categoryId?._id || '',
+        accountId: income.accountId?._id || '',
+        date: income.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+        source: income.source || '',
+        paymentMethod: income.paymentMethod || 'bank_transfer'
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingIncome(null);
+    setFormData({
+      amount: '',
+      description: '',
+      categoryId: '',
+      accountId: '',
+      date: new Date().toISOString().split('T')[0],
+      source: '',
+      paymentMethod: 'bank_transfer'
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      amount: parseFloat(formData.amount)
+    };
+    saveMutation.mutate(payload);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this income?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Incomes</h1>
-        <button className="btn btn-primary flex items-center">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            Incomes
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">Track and manage your income sources</p>
+        </div>
+        <button onClick={() => handleOpenModal()} className="btn btn-success flex items-center justify-center w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add Income
         </button>
       </div>
 
       {/* Filters */}
-      <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="card bg-gradient-to-br from-white to-green-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="input pl-10"
+                className="input pl-10 text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
                 placeholder="Search incomes..."
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Category</label>
             <select
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="input"
+              className="input text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
             >
               <option value="">All Categories</option>
               {categories?.map(category => (
@@ -81,11 +178,11 @@ const Incomes = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Account</label>
             <select
               value={filters.account}
               onChange={(e) => handleFilterChange('account', e.target.value)}
-              className="input"
+              className="input text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
             >
               <option value="">All Accounts</option>
               {accounts?.map(account => (
@@ -97,19 +194,19 @@ const Incomes = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Date Range</label>
             <div className="flex space-x-2">
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="input flex-1"
+                className="input flex-1 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
               />
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="input flex-1"
+                className="input flex-1 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
               />
             </div>
           </div>
@@ -149,9 +246,9 @@ const Incomes = () => {
                     <div className="text-sm font-medium text-gray-900">
                       {income.description}
                     </div>
-                    {income.tags && income.tags.length > 0 && (
+                    {income.source && (
                       <div className="text-sm text-gray-500">
-                        {income.tags.join(', ')}
+                        From: {income.source}
                       </div>
                     )}
                   </td>
@@ -176,10 +273,18 @@ const Incomes = () => {
                     {formatDate(income.date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-primary-600 hover:text-primary-900 mr-3">
+                    <button 
+                      onClick={() => handleOpenModal(income)}
+                      className="text-primary-600 hover:text-primary-900 mr-3 inline-flex items-center"
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
                       Edit
                     </button>
-                    <button className="text-red-600 hover:text-red-900">
+                    <button 
+                      onClick={() => handleDelete(income._id)}
+                      className="text-red-600 hover:text-red-900 inline-flex items-center"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </button>
                   </td>
@@ -195,9 +300,156 @@ const Incomes = () => {
           </div>
         )}
       </div>
+
+      {/* Create/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {editingIncome ? 'Edit Income' : 'Add New Income'}
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      className="input"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.categoryId}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select Category</option>
+                      {categories?.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Account <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.accountId}
+                      onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select Account</option>
+                      {accounts?.map(acc => (
+                        <option key={acc._id} value={acc._id}>{acc.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Payment Method
+                    </label>
+                    <select
+                      value={formData.paymentMethod}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                      className="input"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="card">Card</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="digital_wallet">Digital Wallet</option>
+                      <option value="check">Check</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Source
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.source}
+                      onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                      className="input"
+                      placeholder="Company name, client, etc."
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="input"
+                    placeholder="Brief description of the income"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saveMutation.isPending}
+                    className="btn btn-primary"
+                  >
+                    {saveMutation.isPending ? 'Saving...' : editingIncome ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Incomes;
-

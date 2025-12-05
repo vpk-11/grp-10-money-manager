@@ -166,21 +166,38 @@ const AccountModal = ({ isOpen, onClose, account }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Color</label>
-                    <input
+                    <select
                       {...register('color')}
-                      type="color"
-                      className="w-full h-10 rounded-lg border border-gray-300"
-                    />
+                      className="input mt-1"
+                    >
+                      <option value="#3B82F6">Blue</option>
+                      <option value="#EF4444">Red</option>
+                      <option value="#10B981">Green</option>
+                      <option value="#FACC15">Yellow</option>
+                      <option value="#8B5CF6">Purple</option>
+                      <option value="#14B8A6">Teal</option>
+                      <option value="#F59E0B">Amber</option>
+                      <option value="#6366F1">Indigo</option>
+                      <option value="#FB923C">Orange</option>
+                      <option value="#EC4899">Pink</option>
+                    </select>
                   </div>
 
+                  {/* Icon selector */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Icon</label>
-                    <input
-                      {...register('icon')}
-                      type="text"
-                      className="input mt-1"
-                      placeholder="wallet"
-                    />
+                    <label className="block text-sm font-medium text-gray-700">
+                      Icon
+                    </label>
+                    <select {...register('icon')} className="input mt-1">
+                      <option value="wallet">Wallet</option>
+                      <option value="credit-card">Credit Card</option>
+                      <option value="piggy-bank">Savings</option>
+                      <option value="trending-up">Investment</option>
+                      <option value="banknote">Cash</option>
+                      <option value="building-2">Bank</option>
+                      <option value="landmark">Institution</option>
+                      <option value="coins">Coins</option>
+                    </select>
                   </div>
                 </div>
               </div>
