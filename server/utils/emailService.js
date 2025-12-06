@@ -105,8 +105,7 @@ Exceeded by: $${exceededBy} (${percentage}%)
 Consider reviewing your expenses in this category.
 
 Best regards,
-Money Manager Team
-  `;
+Money Manager Team`;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -127,8 +126,21 @@ Money Manager Team
   return await sendEmail(userEmail, subject, htmlContent, textContent);
 };
 
+const sendWelcomeEmail = async (userEmail, userName) => {
+  const subject = `Welcome to Money Manager, ${userName}!`;
+  const textContent = `Hi ${userName},\n\nWelcome to Money Manager. We're glad you're here!`;
+  const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2 style="color: #10B981;">Welcome to Money Manager</h2>
+    <p>Hi <strong>${userName}</strong>,</p>
+    <p>We're glad you're here! Start tracking your expenses, budgets, and debts today.</p>
+    <p style="color: #6B7280; font-size: 12px;">Best regards,<br>Money Manager Team</p>
+  </div>`;
+  return await sendEmail(userEmail, subject, htmlContent, textContent);
+};
+
 module.exports = {
   sendEmail,
   sendDebtReminderEmail,
-  sendBudgetExceededEmail
+  sendBudgetExceededEmail,
+  sendWelcomeEmail
 };
