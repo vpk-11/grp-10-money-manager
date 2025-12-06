@@ -37,13 +37,11 @@ const Debts = () => {
 
   const saveMutation = useMutation({
     mutationFn: (data) => {
-      // Auto-set paid_off if balance is 0
       if (parseFloat(data.currentBalance) === 0) {
         data.status = 'paid_off';
       } else if (data.status === 'paid_off') {
-        data.status = 'active'; // Re-activate if balance > 0 again
+        data.status = 'active';
       }
-
       if (editingDebt) {
         return api.put(`/debts/${editingDebt._id}`, data);
       }
@@ -193,7 +191,6 @@ const Debts = () => {
 
   if (debtsLoading) return <LoadingSpinner />;
 
-  // Show only active + paid_off debts (optional: filter paid_off if you want separate page)
   const visibleDebts = debts?.filter(d => d.status === 'active' || d.status === 'paid_off') || [];
 
   return (
@@ -264,11 +261,11 @@ const Debts = () => {
                         {debt.lender && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>{debt.lender}</p>}
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => handleEdit(debt)} className="p-2 hover:bg-blue-50 rounded-lg">
-                          <Edit className="h-4 w-4 text-gray-500" />
+                        <button onClick={() => handleEdit(debt)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg">
+                          <Edit className="h-4 w-4 text-gray-500 dark:text-gray-200" />
                         </button>
-                        <button onClick={() => handleDelete(debt._id)} className="p-2 hover:bg-red-50 rounded-lg">
-                          <Trash2 className="h-4 w-4 text-gray-500" />
+                        <button onClick={() => deleteMutation.mutate(debt._id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg">
+                          <Trash2 className="h-4 w-4 text-gray-500 dark:text-gray-200" />
                         </button>
                       </div>
                     </div>
@@ -309,7 +306,6 @@ const Debts = () => {
                     </div>
                   </div>
 
-                  {/* Payment Due Section - ONLY show if NOT paid off */}
                   {!isPaidOff && debt.status === 'active' && (
                     <div className="lg:w-64">
                       <div className={`p-6 rounded-xl text-center shadow-lg border-2 ${isUrgent ? 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-300 dark:border-red-700 animate-pulse' : 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-gray-200 dark:border-gray-600'}`}>
@@ -322,112 +318,101 @@ const Debts = () => {
                         {isUrgent && (
                           <div className="flex items-center justify-center gap-1 mt-3 text-sm text-red-600 dark:text-red-400 font-bold">
                             <AlertCircle className="h-4 w-4" />
-                            ⚠️ Due soon!
+                            ⚠️ Pay soon
                           </div>
                         )}
                       </div>
                     </div>
                   )}
-
-                  {isPaidOff && (
-                    <div className="lg:w-64">
-                      <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 text-center border-2 border-emerald-300 dark:border-emerald-600 shadow-xl">
-                        <CheckCircle2 className="h-14 w-14 text-emerald-600 dark:text-emerald-400 mx-auto mb-3 animate-bounce" />
-                        <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300">🎉 PAID OFF!</p>
-                        <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-2 font-semibold">Amazing work!</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
-
-                {debt.notes && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
-                    {debt.notes}
-                  </div>
-                )}
               </div>
             );
           })
         )}
       </div>
 
-      {/* Modal - same as before */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeModal} />
-            <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-              <h3 className="text-2xl font-bold mb-6">{editingDebt ? 'Edit Debt' : 'Add New Debt'}</h3>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Keep all your form fields exactly as in previous version */}
-                {/* ... (same form you already have) */}
-                {/* Just copy-paste your existing form here */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-1">Debt Name <span className="text-red-500">*</span></label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="input" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Type</label>
-                    <select name="type" value={formData.type} onChange={handleChange} className="input">
-                      <option value="credit_card">Credit Card</option>
-                      <option value="student_loan">Student Loan</option>
-                      <option value="auto_loan">Auto Loan</option>
-                      <option value="mortgage">Mortgage</option>
-                      <option value="personal_loan">Personal Loan</option>
-                      <option value="medical">Medical</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Original Amount <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                      <input type="text" name="principal" value={formData.principal} onChange={handleChange} className="input pl-8" required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Current Balance <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                      <input type="text" name="currentBalance" value={formData.currentBalance} onChange={handleChange} className="input pl-8" required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Interest Rate (%)</label>
-                    <input type="text" name="interestRate" value={formData.interestRate} onChange={handleChange} className="input" placeholder="18.99" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Minimum Payment</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                      <input type="text" name="minimumPayment" value={formData.minimumPayment} onChange={handleChange} className="input pl-8" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Due Day (1-31)</label>
-                    <input type="number" name="dueDate" value={formData.dueDate} onChange={handleChange} className="input" min="1" max="31" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Start Date</label>
-                    <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} className="input" />
-                  </div>
-                  <div><label className="block text-sm font-medium mb-1">Lender</label><input type="text" name="lender" value={formData.lender} onChange={handleChange} className="input" /></div>
-                  <div><label className="block text-sm font-medium mb-1">Account #</label><input type="text" name="accountNumber" value={formData.accountNumber} onChange={handleChange} className="input" /></div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-1">Notes</label>
-                    <textarea name="notes" value={formData.notes} onChange={handleChange} className="input" rows="3" />
-                  </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">{editingDebt ? 'Edit Debt' : 'Add Debt'}</h2>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <input type="text" name="name" value={formData.name} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
                 </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={closeModal} className="flex-1 btn btn-secondary">Cancel</button>
-                  <button type="submit" disabled={saveMutation.isPending} className="flex-1 btn btn-primary">
-                    {saveMutation.isPending ? 'Saving...' : (editingDebt ? 'Update' : 'Add Debt')}
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select name="type" value={formData.type} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2">
+                    <option value="credit_card">Credit Card</option>
+                    <option value="student_loan">Student Loan</option>
+                    <option value="personal_loan">Personal Loan</option>
+                    <option value="mortgage">Mortgage</option>
+                    <option value="auto_loan">Auto Loan</option>
+                    <option value="medical">Medical</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
-              </form>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Original Amount</label>
+                  <input type="text" name="principal" value={formData.principal} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Current Balance</label>
+                  <input type="text" name="currentBalance" value={formData.currentBalance} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Interest Rate (%)</label>
+                  <input type="text" name="interestRate" value={formData.interestRate} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Minimum Payment</label>
+                  <input type="text" name="minimumPayment" value={formData.minimumPayment} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Due Date</label>
+                  <input type="number" name="dueDate" value={formData.dueDate} onChange={handleChange} min="1" max="31"
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Start Date</label>
+                  <input type="date" name="startDate" value={formData.startDate} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Lender</label>
+                  <input type="text" name="lender" value={formData.lender} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Account Number</label>
+                  <input type="text" name="accountNumber" value={formData.accountNumber} onChange={handleChange}
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Notes</label>
+                  <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3"
+                    className="input bg-gray-50 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500 rounded-md w-full p-2" />
+                </div>
+              </div>
+              <div className="flex gap-4 mt-4">
+                <button type="button" onClick={closeModal}
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all rounded-md p-2">
+                  Cancel
+                </button>
+                <button type="submit" disabled={saveMutation.isPending}
+                  className="flex-1 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-all rounded-md p-2">
+                  {saveMutation.isPending ? 'Saving...' : (editingDebt ? 'Update' : 'Add Debt')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
