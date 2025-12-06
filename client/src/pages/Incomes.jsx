@@ -50,26 +50,17 @@ const Incomes = () => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 
-  // Save mutation (create/update)
   const saveMutation = useMutation({
-    mutationFn: (data) => {
-      if (editingIncome) {
-        return api.put(`/incomes/${editingIncome._id}`, data);
-      }
-      return api.post('/incomes', data);
-    },
+    mutationFn: (data) => editingIncome ? api.put(`/incomes/${editingIncome._id}`, data) : api.post('/incomes', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['incomes']);
       queryClient.invalidateQueries(['dashboard']);
       toast.success(editingIncome ? 'Income updated!' : 'Income created!');
       handleCloseModal();
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to save income');
-    }
+    onError: (error) => toast.error(error.response?.data?.message || 'Failed to save income')
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/incomes/${id}`),
     onSuccess: () => {
@@ -77,9 +68,7 @@ const Incomes = () => {
       queryClient.invalidateQueries(['dashboard']);
       toast.success('Income deleted!');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to delete income');
-    }
+    onError: (error) => toast.error(error.response?.data?.message || 'Failed to delete income')
   });
 
   const handleOpenModal = (income = null) => {
@@ -114,11 +103,7 @@ const Incomes = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      amount: parseFloat(formData.amount)
-    };
-    saveMutation.mutate(payload);
+    saveMutation.mutate({ ...formData, amount: parseFloat(formData.amount) });
   };
 
   const handleDelete = (id) => {
@@ -131,12 +116,13 @@ const Incomes = () => {
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-0">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
             Incomes
           </h1>
-          <p className="text-sm text-gray-600 mt-1">Track and manage your income sources</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Track and manage your income sources</p>
         </div>
         <button onClick={() => handleOpenModal()} className="btn btn-success flex items-center justify-center w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
@@ -169,11 +155,7 @@ const Incomes = () => {
               className="input text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
             >
               <option value="">All Categories</option>
-              {categories?.map(category => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
+              {categories?.map(category => <option key={category._id} value={category._id}>{category.name}</option>)}
             </select>
           </div>
 
@@ -185,11 +167,7 @@ const Incomes = () => {
               className="input text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
             >
               <option value="">All Accounts</option>
-              {accounts?.map(account => (
-                <option key={account._id} value={account._id}>
-                  {account.name}
-                </option>
-              ))}
+              {accounts?.map(account => <option key={account._id} value={account._id}>{account.name}</option>)}
             </select>
           </div>
 
@@ -213,185 +191,110 @@ const Incomes = () => {
         </div>
       </div>
 
-      {/* Incomes List */}
+      {/* Incomes Table */}
       <div className="card">
-  <div className="overflow-x-auto">
-    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead className="bg-gray-50 dark:bg-gray-800">
-        <tr>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Description
-          </th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Category
-          </th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Account
-          </th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Amount
-          </th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Date
-          </th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-        {incomesData?.incomes?.map((income) => (
-          <tr key={income._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-            <td className="px-6 py-4 whitespace-nowrap">
-              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {income.description}
-              </div>
-              {income.source && (
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  From: {income.source}
-                </div>
-              )}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-              <div className="flex items-center">
-                <div
-                  className="w-3 h-3 rounded-full mr-2"
-                  style={{ backgroundColor: income.categoryId?.color }}
-                ></div>
-                <span className="text-sm text-gray-900 dark:text-gray-100">
-                  {income.categoryId?.name}
-                </span>
-              </div>
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-              {income.accountId?.name}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 dark:text-green-400">
-              +{formatCurrency(income.amount)}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-              {formatDate(income.date)}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button
-                onClick={() => handleOpenModal(income)}
-                className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-200 mr-3 inline-flex items-center"
-              >
-                <Edit2 className="h-4 w-4 mr-1" />
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(income._id)}
-                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 inline-flex items-center"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+           <thead className="bg-gray-50 dark:bg-gray-800">
+  <tr>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Description</th>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Category</th>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Account</th>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Date</th>
+    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+  </tr>
+</thead>
 
-  {incomesData?.incomes?.length === 0 && (
-    <div className="text-center py-12">
-      <p className="text-gray-500 dark:text-gray-400">No incomes found</p>
-    </div>
-  )}
-</div>
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              {incomesData?.incomes?.map((income) => (
+                <tr key={income._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{income.description}</div>
+                    {income.source && <div className="text-sm text-gray-500 dark:text-gray-400">From: {income.source}</div>}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: income.categoryId?.color }}></div>
+                      <span className="text-sm text-gray-900 dark:text-gray-100">{income.categoryId?.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{income.accountId?.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 dark:text-green-400">
+                    +{formatCurrency(income.amount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(income.date)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleOpenModal(income)}
+                      className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-200 mr-3 inline-flex items-center transition-colors duration-200"
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(income._id)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 inline-flex items-center transition-colors duration-200"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
+        {incomesData?.incomes?.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">No incomes found</p>
+          </div>
+        )}
+      </div>
 
-      {/* Create/Edit Modal */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {editingIncome ? 'Edit Income' : 'Add New Income'}
-                </h2>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{editingIncome ? 'Edit Income' : 'Add New Income'}</h2>
+                <button onClick={handleCloseModal} className="text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                   <X className="h-6 w-6" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/** Inputs **/}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Amount <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="input"
-                      placeholder="0.00"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Amount <span className="text-red-500">*</span></label>
+                    <input type="number" step="0.01" required value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="0.00" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.categoryId}
-                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                      className="input"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Category <span className="text-red-500">*</span></label>
+                    <select required value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
                       <option value="">Select Category</option>
-                      {categories?.map(cat => (
-                        <option key={cat._id} value={cat._id}>{cat.name}</option>
-                      ))}
+                      {categories?.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Account <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.accountId}
-                      onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                      className="input"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Account <span className="text-red-500">*</span></label>
+                    <select required value={formData.accountId} onChange={(e) => setFormData({ ...formData, accountId: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
                       <option value="">Select Account</option>
-                      {accounts?.map(acc => (
-                        <option key={acc._id} value={acc._id}>{acc.name}</option>
-                      ))}
+                      {accounts?.map(acc => <option key={acc._id} value={acc._id}>{acc.name}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="input"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Date <span className="text-red-500">*</span></label>
+                    <input type="date" required value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Payment Method
-                    </label>
-                    <select
-                      value={formData.paymentMethod}
-                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                      className="input"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Payment Method</label>
+                    <select value={formData.paymentMethod} onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
                       <option value="cash">Cash</option>
                       <option value="card">Card</option>
                       <option value="bank_transfer">Bank Transfer</option>
@@ -401,46 +304,19 @@ const Incomes = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Source
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.source}
-                      onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                      className="input"
-                      placeholder="Company name, client, etc."
-                    />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Source</label>
+                    <input type="text" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Company name, client, etc." />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input"
-                    placeholder="Brief description of the income"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Description <span className="text-red-500">*</span></label>
+                  <input type="text" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" placeholder="Brief description of the income" />
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="btn btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saveMutation.isPending}
-                    className="btn btn-primary"
-                  >
+                  <button type="button" onClick={handleCloseModal} className="btn btn-secondary">Cancel</button>
+                  <button type="submit" disabled={saveMutation.isPending} className="btn btn-primary">
                     {saveMutation.isPending ? 'Saving...' : editingIncome ? 'Update' : 'Create'}
                   </button>
                 </div>
