@@ -52,7 +52,7 @@ const Accounts = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Accounts</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Accounts</h1>
         <button
           onClick={() => setIsModalOpen(true)}
           className="btn btn-primary flex items-center"
@@ -74,20 +74,20 @@ const Accounts = () => {
                   <Wallet className="h-6 w-6" style={{ color: account.color }} />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{account.name}</h3>
-                  <p className="text-sm text-gray-500 capitalize">{account.type}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{account.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{account.type}</p>
                 </div>
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => handleEdit(account)}
-                  className="p-2 text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 >
                   <Edit className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(account._id)}
-                  className="p-2 text-gray-400 hover:text-red-600"
+                  className="p-2 text-gray-400 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -95,11 +95,11 @@ const Accounts = () => {
             </div>
             
             <div className="mt-4">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(account.balance, account.currency)}
               </p>
               {account.description && (
-                <p className="text-sm text-gray-500 mt-1">{account.description}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{account.description}</p>
               )}
             </div>
           </div>
@@ -108,9 +108,9 @@ const Accounts = () => {
 
       {accounts?.length === 0 && (
         <div className="text-center py-12">
-          <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No accounts yet</h3>
-          <p className="text-gray-500 mb-4">Get started by creating your first account.</p>
+          <Wallet className="h-12 w-12 text-gray-400 dark:text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No accounts yet</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first account.</p>
           <button
             onClick={() => setIsModalOpen(true)}
             className="btn btn-primary"
@@ -130,4 +130,3 @@ const Accounts = () => {
 };
 
 export default Accounts;
-
