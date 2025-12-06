@@ -126,18 +126,13 @@ main() {
     echo "Available AI Models"
     echo "=========================================="
     echo ""
-    echo "1. llama3.2:1b (1.3GB)   - Lightning fast, basic accuracy"
-    echo "2. llama3.2:3b (2.0GB)   - Balanced speed & intelligence (RECOMMENDED)"
-    echo "3. gemma2:2b (1.6GB)     - Lightweight Google model"
-    echo "4. phi3:mini (2.2GB)     - Efficient Microsoft model"
-    echo "5. mistral:7b (4.4GB)    - Strong reasoning & coding"
-    echo "6. qwen2:7b (4.4GB)      - Multilingual Alibaba model"
-    echo "7. llama3.1:8b (4.9GB)   - High accuracy, detailed responses"
-    echo "8. Install all models"
-    echo "9. Skip model installation"
+    echo "1. llama3.2:1b (1.3GB)   - Lightning quick, basic accuracy (default)"
+    echo "2. llama3.2:3b (2.0GB)   - Balanced speed & intelligence"
+    echo "3. Install both models"
+    echo "4. Skip model installation"
     echo ""
     
-    read -p "Select model(s) to install (1-9): " choice
+    read -p "Select model(s) to install (1-4): " choice
     
     case $choice in
         1)
@@ -147,31 +142,11 @@ main() {
             pull_model "llama3.2:3b"
             ;;
         3)
-            pull_model "gemma2:2b"
-            ;;
-        4)
-            pull_model "phi3:mini"
-            ;;
-        5)
-            pull_model "mistral:7b"
-            ;;
-        6)
-            pull_model "qwen2:7b"
-            ;;
-        7)
-            pull_model "llama3.1:8b"
-            ;;
-        8)
-            echo -e "${BLUE}Installing all models (this will take a while)...${NC}"
+            echo -e "${BLUE}Installing both Llama 3.2 models...${NC}"
             pull_model "llama3.2:1b"
             pull_model "llama3.2:3b"
-            pull_model "gemma2:2b"
-            pull_model "phi3:mini"
-            pull_model "mistral:7b"
-            pull_model "qwen2:7b"
-            pull_model "llama3.1:8b"
             ;;
-        9)
+        4)
             echo -e "${YELLOW}Skipping model installation${NC}"
             ;;
         *)

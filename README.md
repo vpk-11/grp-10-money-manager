@@ -32,7 +32,7 @@ Allows users to set budgets for each spending category and receive alerts when s
 Tracks student loans and other debts, calculates interest, estimates payoff dates, and sends reminders before due dates.
 
 4. Analytics & Chatbot
-Provides an interactive dashboard and an AI-powered chatbot with multiple open-source models that answers financial questions, summarizes spending, and gives personalized recommendations.
+Provides an interactive dashboard and an AI-powered chatbot with open-source models that answers financial questions, summarizes spending, and gives personalized recommendations.
 
 **AI Model Options:**
 - **Llama 3.2 1B** (1.3GB) - Lightning quick, basic accuracy (default)
@@ -80,7 +80,9 @@ Ensures all sensitive data is encrypted and protected with multi-factor authenti
    curl -fsSL https://ollama.com/install.sh | sh
    
    # Windows
-   # Download from https://ollama.com/download
+   # Option A: Download from https://ollama.com/download
+   # Option B: Use provided Windows setup script (recommended)
+   # See the Windows Setup section below
    ```
 
 3. **Pull AI Models**
@@ -130,6 +132,26 @@ Ensures all sensitive data is encrypted and protected with multi-factor authenti
 6. **Access the Application**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:5001
+
+## Windows Setup
+
+For Windows users, a PowerShell setup script is provided to install Ollama and pull only the approved AI models (Llama 3.2 1B and 3B).
+
+1. Run via PowerShell (recommended):
+   ```powershell
+   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ./setup-windows.ps1
+   ```
+
+2. Or double-click the batch wrapper:
+   ```bat
+   setup-windows.bat
+   ```
+
+The script will:
+- Install Ollama (silent installer)
+- Start the Ollama service or run `ollama serve`
+- Offer to download: `llama3.2:1b`, `llama3.2:3b`, or both
 
 ## AI Chatbot Features
 
