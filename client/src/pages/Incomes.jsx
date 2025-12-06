@@ -215,91 +215,92 @@ const Incomes = () => {
 
       {/* Incomes List */}
       <div className="card">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Account
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {incomesData?.incomes?.map((income) => (
-                <tr key={income._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {income.description}
-                    </div>
-                    {income.source && (
-                      <div className="text-sm text-gray-500">
-                        From: {income.source}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: income.categoryId?.color }}
-                      ></div>
-                      <span className="text-sm text-gray-900">
-                        {income.categoryId?.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {income.accountId?.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                    +{formatCurrency(income.amount)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(income.date)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => handleOpenModal(income)}
-                      className="text-primary-600 hover:text-primary-900 mr-3 inline-flex items-center"
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(income._id)}
-                      className="text-red-600 hover:text-red-900 inline-flex items-center"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-50 dark:bg-gray-800">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Description
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Category
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Account
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Amount
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Date
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+        {incomesData?.incomes?.map((income) => (
+          <tr key={income._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {income.description}
+              </div>
+              {income.source && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  From: {income.source}
+                </div>
+              )}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center">
+                <div
+                  className="w-3 h-3 rounded-full mr-2"
+                  style={{ backgroundColor: income.categoryId?.color }}
+                ></div>
+                <span className="text-sm text-gray-900 dark:text-gray-100">
+                  {income.categoryId?.name}
+                </span>
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              {income.accountId?.name}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 dark:text-green-400">
+              +{formatCurrency(income.amount)}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              {formatDate(income.date)}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <button
+                onClick={() => handleOpenModal(income)}
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-200 mr-3 inline-flex items-center"
+              >
+                <Edit2 className="h-4 w-4 mr-1" />
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(income._id)}
+                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 inline-flex items-center"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 
-        {incomesData?.incomes?.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No incomes found</p>
-          </div>
-        )}
-      </div>
+  {incomesData?.incomes?.length === 0 && (
+    <div className="text-center py-12">
+      <p className="text-gray-500 dark:text-gray-400">No incomes found</p>
+    </div>
+  )}
+</div>
+
 
       {/* Create/Edit Modal */}
       {showModal && (

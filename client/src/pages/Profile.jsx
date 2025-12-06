@@ -35,8 +35,8 @@ const Profile = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Profile Settings</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Manage your account settings and preferences.
         </p>
       </div>
@@ -46,16 +46,16 @@ const Profile = () => {
         <div className="lg:col-span-2">
           <div className="card">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile Information</h3>
             </div>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-400" />
                   <input
                     {...register('name', { 
                       required: 'Name is required',
@@ -73,11 +73,11 @@ const Profile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-400" />
                   <input
                     {...register('email', { 
                       required: 'Email is required',
@@ -98,7 +98,7 @@ const Profile = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Currency
                   </label>
                   <select
@@ -116,11 +116,11 @@ const Profile = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Timezone
                   </label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-400" />
                     <input
                       {...register('timezone')}
                       type="text"
@@ -149,27 +149,27 @@ const Profile = () => {
         <div>
           <div className="card">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Account Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Account Summary</h3>
             </div>
             
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Member since</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Member since</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
               
               <div>
-                <p className="text-sm text-gray-500">Last login</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Last login</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                 </p>
               </div>
               
               <div>
-                <p className="text-sm text-gray-500">Email verified</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Email verified</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {user?.isEmailVerified ? 'Yes' : 'No'}
                 </p>
               </div>
@@ -178,14 +178,14 @@ const Profile = () => {
 
           <div className="card mt-6">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Danger Zone</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Danger Zone</h3>
             </div>
             
             <div className="space-y-4">
               <button className="btn btn-danger w-full">
                 Delete Account
               </button>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Once you delete your account, there is no going back. Please be certain.
               </p>
             </div>
@@ -197,4 +197,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
