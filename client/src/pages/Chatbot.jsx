@@ -32,8 +32,8 @@ export default function Chatbot() {
   }, [selectedModel]);
 
   const models = [
-    { id: 'llama3.2:1b', name: 'Llama 3.2 1B', params: '1B', speed: 'Lightning Quick', desc: 'Fastest responses, basic accuracy', size: '1.3GB' },
-    { id: 'llama3.2:3b', name: 'Llama 3.2 3B', params: '3B', speed: 'Quick', desc: 'Balanced speed & intelligence', size: '2.0GB' },
+    { id: 'llama3.2:1b', name: 'Llama 3.2 1B', params: '1B', speed: 'Quick', desc: 'Fastest responses, basic accuracy', size: '1.3GB' },
+    { id: 'llama3.2:3b', name: 'Llama 3.2 3B', params: '3B', speed: 'Accurate', desc: 'Balanced speed & intelligence', size: '2.0GB' },
   ];
 
   const scrollToBottom = () => {
@@ -322,76 +322,54 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Advanced Mode Status Popup */}
-      {showOllamaWarning && ollamaStatus === false && (
+      {/* Mode Status Popup with inline toggle */}
+      {showOllamaWarning && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${ollamaStatus ? 'bg-green-100 dark:bg-green-900' : 'bg-amber-100 dark:bg-amber-900'}`}>
+                {ollamaStatus ? (
+                  <Sparkles className="h-6 w-6 text-green-600 dark:text-green-400" />
+                ) : (
+                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                )}
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  Advanced Chatbot Offline
+                  {ollamaStatus ? 'Advanced Chatbot Online' : 'You are in Basic Mode'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  The advanced AI features are currently unavailable. Basic financial queries about your spending, budgets, and debts will still work.
+                  {ollamaStatus
+                    ? 'Advanced AI features are active. You have access to AI-powered conversations and personalized financial insights.'
+                    : 'Advanced AI features are unavailable. Basic financial queries about your spending, budgets, and debts will still work.'}
                 </p>
-                <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                  <p className="text-xs font-medium text-blue-800 dark:text-blue-300">
-                    💡 Use the toggle switch in the header to enable Advanced Mode
-                  </p>
+                <div className={`rounded-lg p-3 mb-4 border ${ollamaStatus ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800' : 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'}`}>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs font-medium ${ollamaStatus ? 'text-green-800 dark:text-green-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                      Mode: {ollamaStatus ? 'Advanced' : 'Basic'}
+                    </p>
+                    <button
+                      onClick={toggleAdvancedMode}
+                      disabled={isTogglingMode}
+                      className={`relative inline-flex items-center h-6 w-12 rounded-full transition-colors ${ollamaStatus ? 'bg-green-500' : 'bg-gray-400'} disabled:opacity-50`}
+                      aria-label="Toggle chatbot mode"
+                      title={ollamaStatus ? 'Switch to Basic Mode' : 'Switch to Advanced Mode'}
+                    >
+                      <span className={`inline-block h-5 w-5 bg-white rounded-full transform transition-transform ${ollamaStatus ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                    </button>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowOllamaWarning(false)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className={`w-full py-2.5 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${ollamaStatus ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'}`}
                 >
-                  Continue with Basic Mode
+                  {ollamaStatus ? 'Start Chatting' : 'Continue in Basic Mode'}
                 </button>
               </div>
               <button
                 onClick={() => setShowOllamaWarning(false)}
                 className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Advanced Mode Online Success Popup */}
-      {showOllamaWarning && ollamaStatus === true && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  Advanced Chatbot Online
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  Advanced AI features are now active! You have access to AI-powered conversations and personalized financial insights.
-                </p>
-                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
-                  <p className="text-xs font-medium text-green-800 dark:text-green-300">
-                    ✓ Natural language understanding<br/>
-                    ✓ Personalized financial advice<br/>
-                    ✓ Smart spending analysis
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowOllamaWarning(false)}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2.5 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  Start Chatting
-                </button>
-              </div>
-              <button
-                onClick={() => setShowOllamaWarning(false)}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
