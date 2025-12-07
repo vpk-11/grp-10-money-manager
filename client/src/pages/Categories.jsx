@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2 } from 'lucide-react'; 
+import { Plus, Edit, Trash2, X } from 'lucide-react'; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; 
 import {
     faShoppingCart, faCoffee, faHome, faCar,
@@ -8,7 +8,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons'; 
 import { api } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import CategoryModal from '../components/CategoryModal';
 import toast from 'react-hot-toast';
 
 const iconsMap = {
@@ -26,6 +25,8 @@ const Categories = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [activeTab, setActiveTab] = useState('expense');
+    const [formData, setFormData] = useState({ name: '', icon: '', description: '', color: '#34d399' });
+
     const queryClient = useQueryClient();
 
     const { data: expenseCategories = [], isLoading: expenseLoading } = useQuery({
@@ -44,10 +45,13 @@ const Categories = () => {
         },
     });
 
-    const deleteExpenseCategoryMutation = useMutation({
-        mutationFn: (id) => api.delete(`/expense-categories/${id}`),
+    const deleteCategoryMutation = useMutation({
+        mutationFn: (id) =>
+            activeTab === 'expense'
+                ? api.delete(`/expense-categories/${id}`)
+                : api.delete(`/income-categories/${id}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['expense-categories'] });
+            queryClient.invalidateQueries({ queryKey: [activeTab === 'expense' ? 'expense-categories' : 'income-categories'] });
             toast.success('Category deleted successfully');
         },
         onError: (error) => {
@@ -55,49 +59,66 @@ const Categories = () => {
         },
     });
 
-    const deleteIncomeCategoryMutation = useMutation({
-        mutationFn: (id) => api.delete(`/income-categories/${id}`),
+    const saveCategoryMutation = useMutation({
+        mutationFn: (data) =>
+            editingCategory
+                ? api.put(`/${activeTab}-categories/${editingCategory._id}`, data)
+                : api.post(`/${activeTab}-categories`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['income-categories'] });
-            toast.success('Category deleted successfully');
+            queryClient.invalidateQueries({ queryKey: [activeTab === 'expense' ? 'expense-categories' : 'income-categories'] });
+            toast.success(editingCategory ? 'Category updated!' : 'Category created!');
+            handleCloseModal();
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to delete category');
+            toast.error(error.response?.data?.message || 'Failed to save category');
         },
     });
 
     const handleEdit = (category, type) => {
         setEditingCategory({ ...category, type });
+        setFormData({
+            name: category.name,
+            icon: category.icon,
+            description: category.description || '',
+            color: category.color || '#34d399'
+        });
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id, type) => {
+    const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this category?')) {
-            if (type === 'expense') {
-                deleteExpenseCategoryMutation.mutate(id);
-            } else {
-                deleteIncomeCategoryMutation.mutate(id);
-            }
+            deleteCategoryMutation.mutate(id);
         }
     };
 
-    const handleModalClose = () => {
+    const handleOpenModal = () => {
+        setEditingCategory(null);
+        setFormData({ name: '', icon: '', description: '', color: '#34d399' });
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingCategory(null);
+        setFormData({ name: '', icon: '', description: '', color: '#34d399' });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        saveCategoryMutation.mutate(formData);
     };
 
     const isLoading = expenseLoading || incomeLoading;
+    const currentCategories = activeTab === 'expense' ? expenseCategories : incomeCategories;
 
     if (isLoading) return <LoadingSpinner />;
-
-    const currentCategories = activeTab === 'expense' ? expenseCategories : incomeCategories;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categories</h1>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleOpenModal}
                     className="btn btn-primary flex items-center"
                 >
                     <Plus className="h-4 w-4 mr-2" />
@@ -134,7 +155,7 @@ const Categories = () => {
             {/* Categories Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {currentCategories?.map((category) => (
-                    <div key={category._id} className="card hover:shadow-md transition-shadow dark:bg-gray-800">
+                    <div key={category._id} className="card hover:shadow-lg transition-shadow dark:bg-gray-700">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center">
                                 <div 
@@ -150,7 +171,7 @@ const Categories = () => {
                                 <div className="ml-4">
                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{category.name}</h3>
                                     {category.description && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{category.description}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-300">{category.description}</p>
                                     )}
                                 </div>
                             </div>
@@ -162,7 +183,7 @@ const Categories = () => {
                                     <Edit className="h-4 w-4" />
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(category._id, activeTab)}
+                                    onClick={() => handleDelete(category._id)}
                                     className="p-2 text-gray-400 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
                                 >
                                     <Trash2 className="h-4 w-4" />
@@ -181,7 +202,7 @@ const Categories = () => {
                         Get started by creating your first {activeTab} category.
                     </p>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenModal}
                         className="btn btn-primary"
                     >
                         Add Category
@@ -189,12 +210,68 @@ const Categories = () => {
                 </div>
             )}
 
-            <CategoryModal
-                isOpen={isModalOpen}
-                onClose={handleModalClose}
-                category={editingCategory}
-                type={activeTab}
-            />
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {editingCategory ? 'Edit Category' : 'Add New Category'}
+                                </h2>
+                                <button onClick={handleCloseModal} className="text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">Icon</label>
+                                    <select
+                                        required
+                                        value={formData.icon}
+                                        onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                                        className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
+                                    >
+                                        <option value="">Select Icon</option>
+                                        {Object.keys(iconsMap).map(key => (
+                                            <option key={key} value={key}>{key}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">Description</label>
+                                    <input
+                                        type="text"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        className="input dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end space-x-3 pt-4">
+                                    <button type="button" onClick={handleCloseModal} className="btn btn-secondary">Cancel</button>
+                                    <button type="submit" disabled={saveCategoryMutation.isPending} className="btn btn-primary">
+                                        {saveCategoryMutation.isPending ? 'Saving...' : editingCategory ? 'Update' : 'Create'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
