@@ -32,24 +32,6 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem('token');
-      
-      // ⚠️ TODO: REMOVE BEFORE PRODUCTION - Admin bypass handler
-      // Check for admin bypass token (for frontend testing)
-      if (token === 'admin-test-token-12345') {
-        const mockUser = JSON.parse(localStorage.getItem('user') || 'null');
-        setUser(mockUser || {
-          name: 'Admin User',
-          email: 'admin@test.com',
-          _id: 'admin-id-123',
-          currency: 'USD',
-          timezone: 'UTC',
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          isEmailVerified: true
-        });
-        setLoading(false);
-        return;
-      }
 
       // Normal flow - fetch user from API
       const response = await api.get('/auth/me');
@@ -109,15 +91,6 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      // If using admin bypass, just update localStorage
-      const token = localStorage.getItem('token');
-      if (token === 'admin-test-token-12345') {
-        const updatedUser = { ...user, ...profileData };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        return { success: true };
-      }
-
       // Normal flow - update via API
       const response = await api.put('/auth/profile', profileData);
       setUser(response.data.user);
