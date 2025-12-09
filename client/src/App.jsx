@@ -16,6 +16,7 @@ import Analytics from './pages/Analytics';
 import Budgets from './pages/Budgets';
 import Debts from './pages/Debts';
 import Chatbot from './pages/Chatbot';
+import SampleTables from './pages/SampleTables.jsx';
 
 function App() {
   const { user, loading } = useAuth();
@@ -29,6 +30,8 @@ function App() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+        {/* Public sample tables route for screenshots */}
+        <Route path="/sample-tables" element={<SampleTables />} />
         {/* Protected layout with nested routes */}
         <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />}>
           <Route index element={<Navigate to="dashboard" replace />} />

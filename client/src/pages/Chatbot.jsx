@@ -304,10 +304,23 @@ export default function Chatbot() {
     "Check my debts",
     "Savings advice",
   ];
-
+  
   const handleQuickQuestion = (question) => {
     setInput(question);
     inputRef.current?.focus();
+  };
+
+  // Strip simple Markdown markers from bot content for cleaner display
+  const renderContent = (msg) => {
+    if (msg.type !== 'bot') return msg.content;
+    let text = msg.content || '';
+    // remove bold markers **...**
+    text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+    // remove inline code backticks
+    text = text.replace(/`([^`]*)`/g, '$1');
+    // normalize multiple blank lines
+    text = text.replace(/\n{3,}/g, '\n\n');
+    return text;
   };
 
   return (
@@ -621,7 +634,7 @@ export default function Chatbot() {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 pb-24 space-y-3">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -665,9 +678,7 @@ export default function Chatbot() {
                     : "bg-white text-gray-800 border border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
                 }`}
               >
-                <p className="text-sm whitespace-pre-line leading-relaxed">
-                  {message.content}
-                </p>
+                <p className="text-sm whitespace-pre-line leading-relaxed">{message.content}</p>
               </div>
 
               <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 px-2">
@@ -703,15 +714,13 @@ export default function Chatbot() {
       {/* Quick Questions */}
       {messages.length <= 2 && (
         <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-            Quick questions:
-          </p>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Quick questions:</p>
           <div className="flex flex-wrap gap-2">
             {quickQuestions.map((question, index) => (
               <button
                 key={index}
                 onClick={() => handleQuickQuestion(question)}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors shadow-sm"
+                className="inline-block px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors shadow-sm capitalize"
               >
                 {question}
               </button>
