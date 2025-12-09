@@ -9,8 +9,6 @@
 [![Vite](https://img.shields.io/badge/vite-7.2-646CFF)]()
 [![MongoDB](https://img.shields.io/badge/mongodb-5%2B-green)]()
 
----
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -23,7 +21,6 @@
 - [Running the Application](#running-the-application)
 - [Project Structure](#project-structure)
 - [Available Scripts](#available-scripts)
-- [Environment Variables](#environment-variables)
 - [Testing](#testing)
 - [Authors](#authors)
 
@@ -133,13 +130,13 @@ Generate and download comprehensive financial reports in PDF or Excel format.
 
 Before you begin, ensure you have the following installed:
 
-| Software    | Version                  | Required           | Download Link                                                          |
-| ----------- | ------------------------ | ------------------ | ---------------------------------------------------------------------- |
-| **Node.js** | v16+ (v18+ recommended)  | Yes                | [nodejs.org](https://nodejs.org/)                                      |
-| **npm**     | v8+ (comes with Node.js) | Yes                | Included with Node.js                                                  |
-| **MongoDB** | v5+                      | Yes                | [mongodb.com/download](https://www.mongodb.com/try/download/community) |
-| **Ollama**  | Latest                   | For AI features    | [ollama.com](https://ollama.com/download)                              |
-| **Git**     | Latest                   | Recommended        | [git-scm.com](https://git-scm.com/)                                    |
+| Software    | Version                  | Required           | 
+| ----------- | ------------------------ | ------------------ | 
+| **Node.js** | v16+ (v18+ recommended)  | Yes                | 
+| **npm**     | v8+ (comes with Node.js) | Yes                | 
+| **MongoDB** | v5+                      | Yes                | 
+| **Ollama**  | Latest                   | For AI features    | 
+| **Git**     | Latest                   | Recommended        |
 
 ### System Requirements
 
@@ -267,8 +264,6 @@ This creates:
 - Budget templates
 - Debt records
 
----
-
 ## AI Chatbot Setup
 
 The AI chatbot is powered by **Ollama** running locally on your machine.
@@ -345,8 +340,6 @@ Toggle modes using the power button in the chatbot header.
   - "Where should I cut expenses?"
   - "What's my debt payoff timeline?"
 
----
-
 ## Running the Application
 
 ### Development Mode
@@ -401,8 +394,6 @@ npm run build
 # The optimized files will be in client/dist/
 # Serve with a static file server or configure your backend to serve them
 ```
-
----
 
 ## Project Structure
 
@@ -464,6 +455,7 @@ money-manager/
 │   │   ├── chatbot.js           # AI chatbot routes
 │   │   └── ...
 │   ├── tests/                   # Backend tests
+│   │   ├── inegration           # Integration tests
 │   ├── utils/                   # Helper functions
 │   ├── .env                     # Server environment variables
 │   ├── index.js                 # Server entry point
@@ -477,8 +469,6 @@ money-manager/
 ├── README.md                    # This file
 └── .gitignore                   # Git ignore rules
 ```
-
----
 
 ## Available Scripts
 
@@ -521,35 +511,6 @@ npm run lint
 npm test
 ```
 
----
-
-## Environment Variables
-
-### Server Environment Variables
-
-| Variable         | Description               | Default                                     | Required    |
-| ---------------- | ------------------------- | ------------------------------------------- | ----------- |
-| `PORT`           | Server port               | `5001`                                      | Required    |
-| `NODE_ENV`       | Environment mode          | `development`                               | Required    |
-| `MONGODB_URI`    | MongoDB connection string | `mongodb://localhost:27017/expense-tracker` | Required    |
-| `CLIENT_URL`     | Frontend URL for CORS     | `http://localhost:5173`                     | Required    |
-| `JWT_SECRET`     | Secret key for JWT tokens | -                                           | Required    |
-| `OLLAMA_API_URL` | Ollama API endpoint       | `http://localhost:11434`                    | AI only     |
-| `OLLAMA_MODEL`   | AI model to use           | `llama3.2:1b`                               | AI only     |
-| `EMAIL_HOST`     | SMTP server               | -                                           | ❌ Optional |
-| `EMAIL_PORT`     | SMTP port                 | `587`                                       | ❌ Optional |
-| `EMAIL_USER`     | Email username            | -                                           | ❌ Optional |
-| `EMAIL_PASS`     | Email password            | -                                           | ❌ Optional |
-
-### Client Environment Variables
-
-| Variable            | Description         | Default                     | Required |
-| ------------------- | ------------------- | --------------------------- | -------- |
-| `VITE_API_BASE_URL` | Backend API URL     | `http://localhost:5001/api` | Required |
-| `VITE_APP_NAME`     | Application name    | `Money Manager`             | ❌       |
-| `VITE_APP_VERSION`  | Application version | `1.0.0`                     | ❌       |
-
----
 
 ## Testing
 
@@ -706,16 +667,6 @@ Unit tests focus on individual components and functions in isolation.
 - Form validation
 - Utility functions
 
-### Test Documentation
-
-Detailed testing documentation is available in the `docs/` directory:
-
-- `integration-testing.md` - Comprehensive integration testing guide
-- `integration-test-execution-guide.md` - How to run tests
-- `integration-test-screenshot-guide.md` - Screenshot capture instructions
-- `integration-test-status-report.md` - Current test status
-- `integration-testing-final-summary.md` - Complete test summary
-
 ### Test Results
 
 ```bash
@@ -727,28 +678,15 @@ Time:        ~10 seconds
 
 All integration tests are passing with 100% success rate.
 
----
-
 ## Authors
 
 **Project Team**: Group 10  
 **Course**: CompSci 520  
-**Institution**: [Your University Name]
-
-### Contributors
-
-- **Person A**: Authentication & Core Infrastructure
-- **Person B**: Dashboard & Analytics
-- **Person C**: Account Management
-- **Person D**: Transactions & Categories
-
----
+**Institution**: University of Massachusetts - Amherst
 
 ## License
 
 This project is developed as part of CompSci 520 coursework.
-
----
 
 ## Acknowledgments
 
@@ -763,7 +701,6 @@ This project is developed as part of CompSci 520 coursework.
 **Version**: 1.0.0  
 **Build Status**: Passing
 
----
 
 ## Quick Reference Card
 
