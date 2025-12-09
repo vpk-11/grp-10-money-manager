@@ -204,7 +204,7 @@ cd ../client
 npm install
 ```
 
-### Step 3: Configure Environment Variables
+### Step 2: Configure Environment Variables
 
 #### Server Configuration (`server/.env`)
 
@@ -308,8 +308,8 @@ ollama pull llama3.2:3b
 
 | Model            | Size  | Speed        | Accuracy  | Use Case                          |
 | ---------------- | ----- | ------------ | --------- | --------------------------------- |
-| **Llama 3.2 1B** | 1.3GB | ⚡ Very Fast | ✓ Good    | Quick responses, basic queries    |
-| **Llama 3.2 3B** | 2.0GB | ⚡ Fast      | ✓✓ Better | Complex analysis, detailed advice |
+| **Llama 3.2 1B** | 1.3GB | Very Fast | Good    | Quick responses, basic queries    |
+| **Llama 3.2 3B** | 2.0GB | Fast      | Better | Complex analysis, detailed advice |
 
 ### Switching Models
 
@@ -352,7 +352,7 @@ You need **3 terminal windows**:
 # macOS/Linux
 mongod
 
-# Windows (if not running as service)
+# Windows (if not running as a service)
 "C:\Program Files\MongoDB\Server\6.0\bin\mongod.exe"
 ```
 
