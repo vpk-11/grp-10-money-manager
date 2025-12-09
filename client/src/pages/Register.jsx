@@ -1,29 +1,34 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import ThemeToggle from '../components/ThemeToggle';
-import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
+import { useAuth } from "../contexts/AuthContext";
+import toast from "react-hot-toast";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm();
 
-  const password = watch('password');
+  const password = watch("password");
 
   const onSubmit = async (data) => {
     const result = await registerUser(data.name, data.email, data.password);
-    
+
     if (result.success) {
-      toast.success('🎉 Registration successful! Welcome to Money Manager!');
+      toast.success("Registration successful! Welcome to Money Manager!");
       // Welcome message mentions AI chatbot feature
       setTimeout(() => {
-        toast.success('💡 Don\'t forget to try our AI Financial Assistant!');
+        toast.success("Don't forget to try our AI Financial Assistant!");
       }, 2000);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
       toast.error(result.message);
     }
@@ -40,7 +45,7 @@ const Register = () => {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
-            Or{' '}
+            Or{" "}
             <Link
               to="/login"
               className="font-medium text-primary-600 hover:text-primary-500"
@@ -49,11 +54,14 @@ const Register = () => {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
                 Full name
               </label>
               <div className="mt-1 relative">
@@ -61,16 +69,16 @@ const Register = () => {
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('name', { 
-                    required: 'Name is required',
+                  {...register("name", {
+                    required: "Name is required",
                     minLength: {
                       value: 2,
-                      message: 'Name must be at least 2 characters'
+                      message: "Name must be at least 2 characters",
                     },
                     maxLength: {
                       value: 50,
-                      message: 'Name must be less than 50 characters'
-                    }
+                      message: "Name must be less than 50 characters",
+                    },
                   })}
                   type="text"
                   className="input pl-10"
@@ -78,12 +86,17 @@ const Register = () => {
                 />
               </div>
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -91,12 +104,12 @@ const Register = () => {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('email', { 
-                    required: 'Email is required',
+                  {...register("email", {
+                    required: "Email is required",
                     pattern: {
                       value: /^\S+@\S+$/i,
-                      message: 'Invalid email address'
-                    }
+                      message: "Invalid email address",
+                    },
                   })}
                   type="email"
                   className="input pl-10"
@@ -104,12 +117,17 @@ const Register = () => {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
                 Password
               </label>
               <div className="mt-1 relative">
@@ -117,14 +135,14 @@ const Register = () => {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('password', { 
-                    required: 'Password is required',
+                  {...register("password", {
+                    required: "Password is required",
                     minLength: {
                       value: 6,
-                      message: 'Password must be at least 6 characters'
-                    }
+                      message: "Password must be at least 6 characters",
+                    },
                   })}
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   className="input pl-10 pr-10"
                   placeholder="Enter your password"
                 />
@@ -141,12 +159,17 @@ const Register = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
                 Confirm password
               </label>
               <div className="mt-1 relative">
@@ -154,9 +177,10 @@ const Register = () => {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('confirmPassword', { 
-                    required: 'Please confirm your password',
-                    validate: value => value === password || 'Passwords do not match'
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === password || "Passwords do not match",
                   })}
                   type="password"
                   className="input pl-10"
@@ -164,7 +188,9 @@ const Register = () => {
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
           </div>
@@ -175,13 +201,13 @@ const Register = () => {
               disabled={isSubmitting}
               className="btn btn-primary w-full py-3 text-base"
             >
-              {isSubmitting ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? "Creating account..." : "Create account"}
             </button>
           </div>
-          
+
           {/* AI Chatbot Integration - Welcome message for new users */}
           <p className="text-xs text-center text-gray-500 mt-4">
-            🤖 Get personalized financial advice with our AI Assistant!
+            Get personalized financial advice with our AI Assistant!
           </p>
         </form>
       </div>
@@ -190,4 +216,3 @@ const Register = () => {
 };
 
 export default Register;
-
