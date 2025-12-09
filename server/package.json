@@ -7,8 +7,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "jest --runInBand",
-    "test:watch": "jest --watch",
+    "test": "NODE_ENV=test jest --runInBand",
+    "test:watch": "NODE_ENV=test jest --watch",
+    "test:unit": "NODE_ENV=test jest --runInBand --testPathIgnorePatterns=integration",
+    "test:integration": "NODE_ENV=test jest --runInBand --testPathPattern=integration",
+    "test:coverage": "NODE_ENV=test jest --runInBand --coverage",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },

@@ -60,25 +60,32 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-tracker', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-  
-  // Initialize debt reminder scheduler after DB connection
-  initializeDebtReminderScheduler();
-})
-.catch((error) => {
-  console.error('MongoDB connection error:', error);
-  // Exit on DB connection error in all environments to avoid running without required datastore.
-  process.exit(1);
-});
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only connect to database and start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  // Database connection
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-tracker', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+    
+    // Initialize debt reminder scheduler after DB connection
+    initializeDebtReminderScheduler();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+    // Exit on DB connection error in all environments to avoid running without required datastore.
+    process.exit(1);
+  });
+}
+
+// Export app for testing
+module.exports = app;
