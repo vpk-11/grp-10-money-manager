@@ -1,0 +1,31 @@
+{
+  "name": "grp-10-money-manager",
+  "version": "1.0.0",
+  "description": "> A comprehensive expense tracking and financial management application with AI-powered chatbot assistance for students and early-career professionals.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vpk-11/grp-10-money-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vpk-11/grp-10-money-manager/issues"
+  },
+  "homepage": "https://github.com/vpk-11/grp-10-money-manager#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0"
+  }
+}
