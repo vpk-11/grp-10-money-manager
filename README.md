@@ -22,8 +22,9 @@
 - [Project Structure](#project-structure)
 - [Available Scripts](#available-scripts)
 - [Testing](#testing)
+- [API Reference](#api-reference)
+- [Build and Deploy](#build-and-deploy)
 - [Authors](#authors)
- - [API Reference](#api-reference)
 
 ## Overview
 
@@ -141,7 +142,7 @@ Before you begin, ensure you have the following installed:
 
 ### System Requirements
 
-- **RAM**: 4GB minimum (8GB+ recommended for AI features)
+- **RAM**: 8GB minimum (16GB+ recommended for AI features)
 - **Storage**: 5GB free space (for AI models)
 - **OS**: macOS, Linux, or Windows 10/11
 
@@ -309,8 +310,8 @@ ollama pull llama3.2:3b
 
 | Model            | Size  | Speed        | Accuracy  | Use Case                          |
 | ---------------- | ----- | ------------ | --------- | --------------------------------- |
-| **Llama 3.2 1B** | 1.3GB | Very Fast | Good    | Quick responses, basic queries    |
-| **Llama 3.2 3B** | 2.0GB | Fast      | Better | Complex analysis, detailed advice |
+| **Llama 3.2 1B** | 1.3GB | Very Fast    | Good      | Quick responses, basic queries    |
+| **Llama 3.2 3B** | 2.0GB | Fast         | Better    | Complex analysis, detailed advice |
 
 ### Switching Models
 
@@ -432,7 +433,7 @@ money-manager/
 │   ├── vite.config.js           # Vite configuration
 │   ├── tailwind.config.js       # Tailwind CSS config
 │   └── postcss.config.js        # PostCSS config
-│
+├── docs/                        # Application docs
 ├── server/                      # Backend Node.js application
 │   ├── config/
 │   │   └── db.js                # MongoDB connection
@@ -456,7 +457,7 @@ money-manager/
 │   │   ├── chatbot.js           # AI chatbot routes
 │   │   └── ...
 │   ├── tests/                   # Backend tests
-│   │   ├── inegration           # Integration tests
+│   │   ├── inegration/          # Integration tests
 │   ├── utils/                   # Helper functions
 │   ├── .env                     # Server environment variables
 │   ├── index.js                 # Server entry point
@@ -683,6 +684,10 @@ All integration tests are passing with 100% success rate.
 
 For a complete list of backend endpoints, request/response shapes, authentication details, and environment configuration, see `docs/api-reference.md`.
 
+## Build and Deploy
+
+For end-to-end build, run, testing, and deployment options (including Docker), see `BUILD.md`.
+
 ## Authors
 
 **Project Team**: Group 10  
@@ -699,8 +704,6 @@ This project is developed as part of CompSci 520 coursework.
 - **Meta** for Llama 3.2 models
 - **MongoDB** for the database
 - **React** and **Vite** communities
-
----
 
 **Last Updated**: December 2025  
 **Version**: 1.0.0  
