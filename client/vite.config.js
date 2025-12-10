@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
   plugins: [react()],
 
-  // --- Vitest config (from your client-tests branch) ---
   test: {
     globals: true,               
     environment: 'jsdom',        
@@ -12,7 +11,6 @@ export default defineConfig({
     include: ['src/tests/**/*.test.jsx'],
   },
 
-  // --- Dev server proxy (from ui-fixes branch) ---
   server: {
     proxy: {
       '/api': {
