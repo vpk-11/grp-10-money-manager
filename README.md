@@ -23,6 +23,7 @@
 - [Available Scripts](#available-scripts)
 - [Testing](#testing)
 - [Authors](#authors)
+ - [API Reference](#api-reference)
 
 ## Overview
 
@@ -677,6 +678,10 @@ Time:        ~10 seconds
 ```
 
 All integration tests are passing with 100% success rate.
+
+## API Reference
+
+For a complete list of backend endpoints, request/response shapes, authentication details, and environment configuration, see `docs/api-reference.md`.
 
 ## Authors
 
